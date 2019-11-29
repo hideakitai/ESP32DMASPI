@@ -1,0 +1,20 @@
+{
+    "name": "ESP32DMASPI",
+    "keywords": "esp,spi,dma,master,slave",
+    "description": "SPI library for ESP32 which use DMA buffer to send/receive transactions",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/hideakitai/ESP32DMASPI.git"
+    },
+    "authors":
+    {
+        "name": "Hideaki Tai",
+        "url": "https://github.com/hideakitai",
+        "maintainer": true
+    },
+    "version": "0.1.0",
+    "license": "MIT",
+    "frameworks": "arduino",
+    "platforms": "*"
+}
