@@ -48,11 +48,6 @@ bool Slave::begin(uint8_t spi_bus, int8_t sck, int8_t miso, int8_t mosi, int8_t 
         printf("[WARNING] invalid DMA channel %d, force to set channel 2. make sure to select 1 or 2\n", dma_chan);
         dma_chan = 2;
     }
-    if ((mode != SPI_MODE1) && (mode != SPI_MODE3))
-    {
-        printf("[WARNING] invalid SPI channel %d, force to set SPI_MODE3. make sure to select MODE1 or MODE3 (because of DMA)\n", mode);
-        mode = SPI_MODE3;
-    }
 
     host = (spi_bus == HSPI) ? HSPI_HOST : VSPI_HOST;
     esp_err_t e = spi_slave_initialize(host, &bus_cfg, &if_cfg, dma_chan);
