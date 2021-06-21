@@ -19,7 +19,7 @@ class Master
     spi_device_handle_t handle;
 
     spi_host_device_t host { HSPI_HOST };
-    uint8_t mode {SPI_MODE3}; // must be 1 or 3
+    uint8_t mode {SPI_MODE3};
     int dma_chan {1}; // must be 1 or 2
     int max_size {4094}; // default size
     uint32_t frequency {SPI_MASTER_FREQ_8M};

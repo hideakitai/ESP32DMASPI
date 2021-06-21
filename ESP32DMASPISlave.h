@@ -22,7 +22,7 @@ class Slave
     spi_bus_config_t bus_cfg;
 
     spi_host_device_t host { HSPI_HOST };
-    uint8_t mode {SPI_MODE3}; // must be 1 or 3
+    uint8_t mode {SPI_MODE3};
     int dma_chan {2}; // must be 1 or 2
     int max_size {4094}; // default size
 

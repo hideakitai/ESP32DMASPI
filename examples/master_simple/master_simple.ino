@@ -27,7 +27,7 @@ void setup()
 
     delay(5000);
 
-    master.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
+    master.setDataMode(SPI_MODE3);
     // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
     master.setFrequency(4000000);
     master.setMaxTransferSize(BUFFER_SIZE);

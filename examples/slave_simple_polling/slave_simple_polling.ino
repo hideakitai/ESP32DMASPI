@@ -28,7 +28,7 @@ void setup()
 
     delay(5000);
 
-    slave.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
+    slave.setDataMode(SPI_MODE3);
     slave.setMaxTransferSize(BUFFER_SIZE);
     slave.setDMAChannel(2); // 1 or 2 only
     slave.setQueueSize(1); // transaction queue size

@@ -113,7 +113,7 @@ void setup()
 
     delay(5000);
 
-    master.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
+    master.setDataMode(SPI_MODE3);
     // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
     master.setFrequency(4000000);
     master.setMaxTransferSize(BUFFER_SIZE);
@@ -123,7 +123,7 @@ void setup()
     // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
     master.begin(VSPI);
 
-    slave.setDataMode(SPI_MODE3); // for DMA, only 1 or 3 is available
+    slave.setDataMode(SPI_MODE3);
     slave.setMaxTransferSize(BUFFER_SIZE);
     slave.setDMAChannel(2); // 1 or 2 only
     slave.setQueueSize(1); // transaction queue size
