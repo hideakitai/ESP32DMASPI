@@ -6,17 +6,14 @@ static const uint32_t BUFFER_SIZE = 8192;
 uint8_t* spi_master_tx_buf;
 uint8_t* spi_master_rx_buf;
 
-void set_buffer()
-{
-    for (uint32_t i = 0; i < BUFFER_SIZE; i++)
-    {
+void set_buffer() {
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         spi_master_tx_buf[i] = i & 0xFF;
     }
     memset(spi_master_rx_buf, 0, BUFFER_SIZE);
 }
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // to use DMA buffer, use these methods to allocate buffer
@@ -31,15 +28,14 @@ void setup()
     // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
     master.setFrequency(4000000);
     master.setMaxTransferSize(BUFFER_SIZE);
-    master.setDMAChannel(1); // 1 or 2 only
-    master.setQueueSize(1); // transaction queue size
+    master.setDMAChannel(1);  // 1 or 2 only
+    master.setQueueSize(1);   // transaction queue size
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    master.begin(); // default SPI is HSPI
+    master.begin();  // default SPI is HSPI
 }
 
-void loop()
-{
+void loop() {
     // start and wait to complete transaction
     master.transfer(spi_master_tx_buf, spi_master_rx_buf, BUFFER_SIZE);
 

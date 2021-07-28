@@ -6,10 +6,8 @@ static const uint32_t BUFFER_SIZE = 8192;
 uint8_t* spi_slave_tx_buf;
 uint8_t* spi_slave_rx_buf;
 
-void set_buffer()
-{
-    for (uint32_t i = 0; i < BUFFER_SIZE; i++)
-    {
+void set_buffer() {
+    for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
         spi_master_tx_buf[i] = i & 0xFF;
         spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
     }
@@ -17,17 +15,14 @@ void set_buffer()
     memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 }
 
-
 constexpr uint8_t CORE_TASK_SPI_SLAVE {0};
 constexpr uint8_t CORE_TASK_PROCESS_BUFFER {0};
 
 static TaskHandle_t task_handle_wait_spi = 0;
 static TaskHandle_t task_handle_process_buffer = 0;
 
-void task_wait_spi(void *pvParameters)
-{
-    while(1)
-    {
+void task_wait_spi(void* pvParameters) {
+    while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         slave.wait(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
@@ -36,10 +31,8 @@ void task_wait_spi(void *pvParameters)
     }
 }
 
-void task_process_buffer(void *pvParameters)
-{
-    while(1)
-    {
+void task_process_buffer(void* pvParameters) {
+    while (1) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         // show received data
@@ -53,9 +46,7 @@ void task_process_buffer(void *pvParameters)
     }
 }
 
-
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // to use DMA buffer, use these methods to allocate buffer
@@ -68,12 +59,11 @@ void setup()
 
     slave.setDataMode(SPI_MODE3);
     slave.setMaxTransferSize(BUFFER_SIZE);
-    slave.setDMAChannel(2); // 1 or 2 only
-    slave.setQueueSize(1); // transaction queue size
+    slave.setDMAChannel(2);  // 1 or 2 only
+    slave.setQueueSize(1);   // transaction queue size
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
     slave.begin(HSPI);
-
 
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
     xTaskNotifyGive(task_handle_wait_spi);
@@ -81,6 +71,5 @@ void setup()
     xTaskCreatePinnedToCore(task_process_buffer, "task_process_buffer", 2048, NULL, 2, &task_handle_process_buffer, CORE_TASK_PROCESS_BUFFER);
 }
 
-void loop()
-{
+void loop() {
 }

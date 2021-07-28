@@ -37,8 +37,7 @@ static const uint32_t BUFFER_SIZE = 8192;
 uint8_t* spi_master_tx_buf;
 uint8_t* spi_master_rx_buf;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // to use DMA buffer, use these methods to allocate buffer
@@ -56,8 +55,7 @@ void setup()
     master.begin(); // default SPI is HSPI
 }
 
-void loop()
-{
+void loop() {
    	// set buffer data here
 
     // start and wait to complete transaction
@@ -85,8 +83,7 @@ static const uint32_t BUFFER_SIZE = 8192;
 uint8_t* spi_slave_tx_buf;
 uint8_t* spi_slave_rx_buf;
 
-void setup()
-{
+void setup() {
     Serial.begin(115200);
 
     // to use DMA buffer, use these methods to allocate buffer
@@ -103,8 +100,7 @@ void setup()
     slave.begin(); // default SPI is HSPI
 }
 
-void loop()
-{
+void loop() {
     // set buffer (reply to master) data here
 
     // if there is no transaction in queue, add transaction
@@ -115,8 +111,7 @@ void loop()
     // available() returns size of results of transaction,
     // and buffer is automatically updated
 
-    while (slave.available())
-    {
+    while (slave.available()) {
         // do something here with received data
         for (size_t i = 0; i < BUFFER_SIZE; ++i)
             printf("%d ", spi_slave_rx_buf[i]);
