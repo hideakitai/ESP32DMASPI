@@ -31,20 +31,20 @@ namespace esp32 {
                 std::deque<uint32_t> results;
 
             public:
-                bool begin(uint8_t spi_bus = HSPI, int8_t sck = -1, int8_t miso = -1, int8_t mosi = -1, int8_t ss = -1);
+                bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, const int8_t ss = -1);
                 bool end();
 
-                uint8_t* allocDMABuffer(size_t s);
+                uint8_t* allocDMABuffer(const size_t s);
 
                 // wait for transaction one by one
-                bool wait(uint8_t* rx_buf, size_t size);  // no data to master
-                bool wait(uint8_t* rx_buf, uint8_t* tx_buf, size_t size);
+                bool wait(uint8_t* rx_buf, const size_t size);  // no data to master
+                bool wait(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
 
                 // queueing transaction
                 // wait (blocking) and timeout occurs if queue is full with transaction
                 // (but designed not to queue transaction more than queue_size, so there is no timeout argument)
-                bool queue(uint8_t* rx_buf, size_t size);  // no data to master
-                bool queue(uint8_t* rx_buf, uint8_t* tx_buf, size_t size);
+                bool queue(uint8_t* rx_buf, const size_t size);  // no data to master
+                bool queue(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
 
                 // wait until all queued transaction will be done by master
                 // if yield is finished, all the buffer is updated to latest
@@ -57,14 +57,14 @@ namespace esp32 {
                 void pop();
 
                 // set these optional parameters before begin() if you want
-                void setDataMode(uint8_t m);
-                void setMaxTransferSize(int s);
-                void setDMAChannel(int c);  // 1 or 2 only
-                void setQueueSize(int s);
+                void setDataMode(const uint8_t m);
+                void setMaxTransferSize(const int s);
+                void setDMAChannel(const int c);  // 1 or 2 only
+                void setQueueSize(const int s);
 
             private:
-                void addTransaction(uint8_t* rx_buf, uint8_t* tx_buf, size_t size);
-                void pushResult(uint32_t s);
+                void addTransaction(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
+                void pushResult(const uint32_t s);
             };
 
         }  // namespace dma

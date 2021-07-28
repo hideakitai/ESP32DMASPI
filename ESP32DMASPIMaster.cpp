@@ -2,7 +2,7 @@
 
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 
-bool Master::begin(uint8_t spi_bus, int8_t sck, int8_t miso, int8_t mosi, int8_t ss) {
+bool Master::begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
     if ((sck == -1) && (miso == -1) && (mosi == -1) && (ss == -1)) {
         bus_cfg.sclk_io_num = (spi_bus == VSPI) ? SCK : 14;
         bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
@@ -64,15 +64,15 @@ bool Master::end() {
     return true;
 }
 
-uint8_t* Master::allocDMABuffer(size_t s) {
+uint8_t* Master::allocDMABuffer(const size_t s) {
     return (uint8_t*)heap_caps_malloc(s, MALLOC_CAP_DMA);
 }
 
-size_t Master::transfer(uint8_t* tx_buf, size_t size) {
+size_t Master::transfer(const uint8_t* tx_buf, const size_t size) {
     return transfer(tx_buf, NULL, size);
 }
 
-size_t Master::transfer(uint8_t* tx_buf, uint8_t* rx_buf, size_t size) {
+size_t Master::transfer(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
     if (!transactions.empty()) {
         printf("[ERROR] can not execute transfer if queued transaction exits. queueed size = %d\n", transactions.size());
         return 0;
@@ -93,11 +93,11 @@ size_t Master::transfer(uint8_t* tx_buf, uint8_t* rx_buf, size_t size) {
     return len;
 }
 
-bool Master::queue(uint8_t* tx_buf, size_t size) {
+bool Master::queue(const uint8_t* tx_buf, const size_t size) {
     return queue(tx_buf, NULL, size);
 }
 
-bool Master::queue(uint8_t* tx_buf, uint8_t* rx_buf, size_t size) {
+bool Master::queue(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
     if (transactions.size() >= queue_size) {
         printf("[WARNING] queue is full with transactions. discard new transaction request\n");
         return false;
@@ -120,27 +120,27 @@ void Master::yield() {
     }
 }
 
-void Master::setFrequency(uint32_t f) {
+void Master::setFrequency(const uint32_t f) {
     frequency = f;
 }
 
-void Master::setDataMode(uint8_t m) {
+void Master::setDataMode(const uint8_t m) {
     mode = m;
 }
 
-void Master::setMaxTransferSize(int s) {
+void Master::setMaxTransferSize(const int s) {
     max_size = s;
 }
 
-void Master::setDMAChannel(int c) {
+void Master::setDMAChannel(const int c) {
     dma_chan = c;  // 1 or 2 only
 }
 
-void Master::setQueueSize(int s) {
+void Master::setQueueSize(const int s) {
     queue_size = s;
 }
 
-void Master::addTransaction(uint8_t* tx_buf, uint8_t* rx_buf, size_t size) {
+void Master::addTransaction(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size) {
     transactions.emplace_back(spi_transaction_t());
     transactions.back().flags = 0;
     // transactions.back().cmd = ;
