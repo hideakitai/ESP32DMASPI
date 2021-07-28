@@ -1,5 +1,10 @@
 # ESP32DMASPI
+
 SPI library for ESP32 which use DMA buffer to send/receive transactions
+
+## ESP32SPISlave
+
+This is the SPI library to send/receive large transaction with DMA. Please use [ESP32SPISlave](https://github.com/hideakitai/ESP32SPISlave) for the simple SPI Slave mode without DMA.
 
 ## Feature
 
@@ -52,7 +57,8 @@ void setup() {
 
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    master.begin(); // default SPI is HSPI
+    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
+    master.begin(HSPI);
 }
 
 void loop() {
@@ -97,7 +103,8 @@ void setup() {
 
     // begin() after setting
     // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    slave.begin(); // default SPI is HSPI
+    // VSPI = CS: 5, CLK: 18, MOSI: 23, MISO: 19
+    slave.begin(VSPI);
 }
 
 void loop() {
@@ -122,7 +129,69 @@ void loop() {
 }
 ```
 
+## APIs
 
+### Master
+
+```C++
+bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, const int8_t ss = -1);
+bool end();
+
+uint8_t* allocDMABuffer(const size_t s);
+
+// execute transaction and wait for transmission one by one
+size_t transfer(const uint8_t* tx_buf, const size_t size);
+size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size);
+
+// queueing transaction and execute simultaneously
+// wait (blocking) and timeout occurs if queue is full with transaction
+// (but designed not to queue transaction more than queue_size, so there is no timeout argument)
+bool queue(const uint8_t* tx_buf, const size_t size);
+bool queue(const uint8_t* tx_buf, uint8_t* rx_buf, const size_t size);
+void yield();
+
+// set these optional parameters before begin() if you want
+void setDataMode(const uint8_t m);
+void setFrequency(const uint32_t f);
+void setMaxTransferSize(const int s);
+void setDMAChannel(const int c);
+void setQueueSize(const int s);
+```
+
+### Slave
+
+```C++
+bool begin(const uint8_t spi_bus = HSPI, const int8_t sck = -1, const int8_t miso = -1, const int8_t mosi = -1, const int8_t ss = -1);
+bool end();
+
+uint8_t* allocDMABuffer(const size_t s);
+
+// wait for transaction one by one
+bool wait(uint8_t* rx_buf, const size_t size);  // no data to master
+bool wait(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
+
+// queueing transaction
+// wait (blocking) and timeout occurs if queue is full with transaction
+// (but designed not to queue transaction more than queue_size, so there is no timeout argument)
+bool queue(uint8_t* rx_buf, const size_t size);  // no data to master
+bool queue(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
+
+// wait until all queued transaction will be done by master
+// if yield is finished, all the buffer is updated to latest
+void yield();
+
+// transaction result info
+size_t available() const;
+size_t remained() const;
+uint32_t size() const;
+void pop();
+
+// set these optional parameters before begin() if you want
+void setDataMode(const uint8_t m);
+void setMaxTransferSize(const int s);
+void setDMAChannel(const int c);  // 1 or 2 only
+void setQueueSize(const int s);
+```
 
 ## TODO (PR welcome!!)
 
