@@ -105,17 +105,20 @@ void loop() {
     }
 
     // if slave has received transaction data, available() returns size of received transactions
-    while (slave.available()) {
+    while (slave.available() < N_QUEUES)
+        ;
+
+    for (size_t q = 0; q < N_QUEUES; ++q) {
         printf("slave received size = %d\n", slave.size());
 
-        if (memcmp(spi_slave_rx_buf, spi_master_tx_buf, BUFFER_SIZE)) {
+        if (memcmp(spi_slave_rx_buf[q], spi_master_tx_buf[q], BUFFER_SIZE)) {
             printf("[ERROR] Master -> Slave Received Data has not matched !!\n");
-            cmp_bug("Received ", spi_slave_rx_buf, "Sent ", spi_master_tx_buf, BUFFER_SIZE);
+            cmp_bug("Received ", spi_slave_rx_buf[q], "Sent ", spi_master_tx_buf[q], BUFFER_SIZE);
         }
 
-        if (memcmp(spi_master_rx_buf, spi_slave_tx_buf, BUFFER_SIZE)) {
+        if (memcmp(spi_master_rx_buf[q], spi_slave_tx_buf[q], BUFFER_SIZE)) {
             printf("ERROR: Slave -> Master Received Data has not matched !!\n");
-            cmp_bug("Received ", spi_master_rx_buf, "Sent ", spi_slave_tx_buf, BUFFER_SIZE);
+            cmp_bug("Received ", spi_master_rx_buf[q], "Sent ", spi_slave_tx_buf[q], BUFFER_SIZE);
         }
 
         slave.pop();

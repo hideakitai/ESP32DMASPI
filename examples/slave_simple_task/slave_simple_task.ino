@@ -8,10 +8,8 @@ uint8_t* spi_slave_rx_buf;
 
 void set_buffer() {
     for (uint32_t i = 0; i < BUFFER_SIZE; i++) {
-        spi_master_tx_buf[i] = i & 0xFF;
         spi_slave_tx_buf[i] = (0xFF - i) & 0xFF;
     }
-    memset(spi_master_rx_buf, 0, BUFFER_SIZE);
     memset(spi_slave_rx_buf, 0, BUFFER_SIZE);
 }
 
