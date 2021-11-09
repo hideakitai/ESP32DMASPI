@@ -34,8 +34,9 @@ void task_process_buffer(void* pvParameters) {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         // show received data
-        for (size_t i = 0; i < BUFFER_SIZE; ++i)
+        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
             printf("%d ", spi_slave_rx_buf[i]);
+        }
         printf("\n");
 
         slave.pop();
@@ -66,8 +67,14 @@ void setup() {
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
     xTaskNotifyGive(task_handle_wait_spi);
 
-    xTaskCreatePinnedToCore(task_process_buffer, "task_process_buffer", 2048, NULL, 2, &task_handle_process_buffer, CORE_TASK_PROCESS_BUFFER);
+    xTaskCreatePinnedToCore(
+        task_process_buffer,
+        "task_process_buffer",
+        2048,
+        NULL,
+        2,
+        &task_handle_process_buffer,
+        CORE_TASK_PROCESS_BUFFER);
 }
 
-void loop() {
-}
+void loop() {}

@@ -16,9 +16,9 @@ void dump_buf(const char* title, uint8_t* buf, uint32_t start, uint32_t len) {
     else
         printf("%s [%d-%d]: ", title, start, start + len - 1);
 
-    for (uint32_t i = 0; i < len; i++)
+    for (uint32_t i = 0; i < len; i++) {
         printf("%02X ", buf[start + i]);
-
+    }
     printf("\n");
 }
 
@@ -26,11 +26,11 @@ void cmp_bug(const char* a_title, uint8_t* a_buf, const char* b_title, uint8_t* 
     for (uint32_t i = 0; i < size; i++) {
         uint32_t j = 1;
 
-        if (a_buf[i] == b_buf[i])
-            continue;
+        if (a_buf[i] == b_buf[i]) continue;
 
-        while (a_buf[i + j] != b_buf[i + j])
+        while (a_buf[i + j] != b_buf[i + j]) {
             j++;
+        }
 
         dump_buf(a_title, a_buf, i, j);
         dump_buf(b_title, b_buf, i, j);
@@ -123,7 +123,14 @@ void setup() {
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
     xTaskNotifyGive(task_handle_wait_spi);
 
-    xTaskCreatePinnedToCore(task_process_buffer, "task_process_buffer", 2048, NULL, 2, &task_handle_process_buffer, CORE_TASK_PROCESS_BUFFER);
+    xTaskCreatePinnedToCore(
+        task_process_buffer,
+        "task_process_buffer",
+        2048,
+        NULL,
+        2,
+        &task_handle_process_buffer,
+        CORE_TASK_PROCESS_BUFFER);
 }
 
 void loop() {

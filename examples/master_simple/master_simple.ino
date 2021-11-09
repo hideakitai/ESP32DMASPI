@@ -40,8 +40,9 @@ void loop() {
     master.transfer(spi_master_tx_buf, spi_master_rx_buf, BUFFER_SIZE);
 
     // show received data (if needed)
-    for (size_t i = 0; i < BUFFER_SIZE; ++i)
+    for (size_t i = 0; i < BUFFER_SIZE; ++i) {
         printf("%d ", spi_master_rx_buf[i]);
+    }
     printf("\n");
 
     delay(2000);

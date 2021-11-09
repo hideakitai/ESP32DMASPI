@@ -35,8 +35,9 @@ void setup() {
 
 void loop() {
     // if there is no transaction in queue, add transaction
-    if (slave.remained() == 0)
+    if (slave.remained() == 0) {
         slave.queue(spi_slave_rx_buf, spi_slave_tx_buf, BUFFER_SIZE);
+    }
 
     // if transaction has completed from master,
     // available() returns size of results of transaction,
@@ -44,8 +45,9 @@ void loop() {
 
     while (slave.available()) {
         // show received data
-        for (size_t i = 0; i < BUFFER_SIZE; ++i)
+        for (size_t i = 0; i < BUFFER_SIZE; ++i) {
             printf("%d ", spi_slave_rx_buf[i]);
+        }
         printf("\n");
 
         slave.pop();

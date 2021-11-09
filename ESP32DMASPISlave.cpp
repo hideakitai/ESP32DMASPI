@@ -60,7 +60,7 @@ bool Slave::wait(uint8_t* rx_buf, const size_t size) {
 
 bool Slave::wait(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size) {
     if (!transactions.empty()) {
-        printf("[ERROR] can not execute transfer if queued transaction exits. queueed size = %d\n", transactions.size());
+        printf("[ERROR] cannot execute transfer if queued transaction exits. queue size = %d\n", transactions.size());
         return 0;
     }
 
@@ -97,8 +97,9 @@ void Slave::yield() {
     for (uint8_t i = 0; i < n; ++i) {
         spi_slave_transaction_t* r_trans;
         esp_err_t e = spi_slave_get_trans_result(host, &r_trans, portMAX_DELAY);
-        if (e != ESP_OK)
+        if (e != ESP_OK) {
             printf("[ERROR] SPI slave get trans result failed %d / %d : %d\n", i, n, e);
+        }
     }
 }
 
