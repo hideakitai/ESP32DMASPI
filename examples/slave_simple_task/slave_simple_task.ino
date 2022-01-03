@@ -56,13 +56,13 @@ void setup() {
 
     delay(5000);
 
-    slave.setDataMode(SPI_MODE3);
+    // slave device configuration
+    slave.setDataMode(SPI_MODE0);
     slave.setMaxTransferSize(BUFFER_SIZE);
-    slave.setDMAChannel(2);  // 1 or 2 only
-    slave.setQueueSize(1);   // transaction queue size
+
     // begin() after setting
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    slave.begin(HSPI);
+    slave.begin();  // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
+                    // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
 
     xTaskCreatePinnedToCore(task_wait_spi, "task_wait_spi", 2048, NULL, 2, &task_handle_wait_spi, CORE_TASK_SPI_SLAVE);
     xTaskNotifyGive(task_handle_wait_spi);

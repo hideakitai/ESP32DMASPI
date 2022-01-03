@@ -21,18 +21,14 @@ void setup() {
     spi_master_rx_buf = master.allocDMABuffer(BUFFER_SIZE);
 
     set_buffer();
-
     delay(5000);
 
-    master.setDataMode(SPI_MODE3);
-    // master.setFrequency(SPI_MASTER_FREQ_8M); // too fast for bread board...
-    master.setFrequency(4000000);
-    master.setMaxTransferSize(BUFFER_SIZE);
-    master.setDMAChannel(1);  // 1 or 2 only
-    master.setQueueSize(1);   // transaction queue size
+    master.setDataMode(SPI_MODE0);           // default: SPI_MODE0
+    master.setFrequency(4000000);            // default: 8MHz (too fast for bread board...)
+    master.setMaxTransferSize(BUFFER_SIZE);  // default: 4092 bytes
+
     // begin() after setting
-    // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12
-    master.begin();  // default SPI is HSPI
+    master.begin();  // default: HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12)
 }
 
 void loop() {
