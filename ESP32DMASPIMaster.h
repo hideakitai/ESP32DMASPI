@@ -57,6 +57,9 @@ class Master {
     std::deque<spi_transaction_ext_t> transactions;
 
 public:
+    // use HSPI or VSPI with default pin assignment
+    // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+    // HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
     bool begin(const uint8_t spi_bus = HSPI) {
         bus_cfg.mosi_io_num = (spi_bus == VSPI) ? MOSI : 13;
         bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
@@ -65,6 +68,7 @@ public:
         return initialize(spi_bus);
     }
 
+    // use HSPI or VSPI with your own pin assignment
     bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss) {
         bus_cfg.sclk_io_num = sck;
         bus_cfg.miso_io_num = miso;
@@ -89,6 +93,7 @@ public:
         return true;
     }
 
+    // DMA requires the memory allocated with this method
     uint8_t* allocDMABuffer(const size_t n) {
         if (n % 4 != 0) {
             printf("[WARN] DMA buffer size must be multiples of 4 bytes\n");
