@@ -18,6 +18,13 @@ This is the SPI library to send/receive large transaction with DMA. Please use [
   - `queue()` and `yield()` to receive/send multiple transactions at once (more efficient than `wait()` many times)
 - Various configurations based on driver APIs
 
+### Supported ESP32 Version
+
+| IDE         | ESP32 Board Version                  |
+| ----------- | ------------------------------------ |
+| Arduino IDE | `>= 2.0.0`                           |
+| PlatformIO  | Currently (`<= 3.4.0`) NOT Supported |
+
 ## WARNING
 
 - There is known [issue](https://www.esp32.com/viewtopic.php?f=12&t=7339&sid=2257561718efae97d5b805c039b5764e) that last 4 bytes are missing if DMA is used with SPI Slave
