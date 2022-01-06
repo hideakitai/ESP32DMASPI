@@ -121,10 +121,15 @@ void loop() {
 ### Master
 
 ```C++
+// use HSPI or VSPI with default pin assignment
+// VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+// HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
 bool begin(const uint8_t spi_bus = HSPI);
+// use HSPI or VSPI with your own pin assignment
 bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
+// DMA requires the memory allocated with this method
 uint8_t* allocDMABuffer(const size_t n);
 
 // execute transaction and wait for transmission one by one
@@ -172,10 +177,15 @@ void setDMAChannel(const uint8_t c);            // default: auto
 ### Slave
 
 ```C++
+// use HSPI or VSPI with default pin assignment
+// VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+// HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
 bool begin(const uint8_t spi_bus = HSPI);
+// use HSPI or VSPI with your own pin assignment
 bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
+// DMA requires the memory allocated with this method
 uint8_t* allocDMABuffer(const size_t s);
 
 // wait for transaction one by one
@@ -193,10 +203,10 @@ bool queue(uint8_t* rx_buf, const uint8_t* tx_buf, const size_t size);
 void yield();
 
 // transaction result info
-size_t available() const;
-size_t remained() const;
-uint32_t size() const;
-void pop();
+size_t available() const;  // size of completed (received) transaction results
+size_t remained() const;   // size of queued (not completed) transactions
+uint32_t size() const;     // size of the received bytes of the oldest queued transaction result
+void pop();                // pop the oldest transaction result
 
 // ===== Main Configurations =====
 // set these optional parameters before begin() if you want
