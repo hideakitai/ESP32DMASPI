@@ -222,6 +222,12 @@ public:
         }
     }
 
+    void yieldSingleTransaction() {
+        spi_transaction_t* r_trans;
+        esp_err_t e = spi_device_get_trans_result(handle, &r_trans, portMAX_DELAY);
+        transactions.pop_front();
+    }
+
     // ===== Main Configurations =====
     // set these optional parameters before begin() if you want
 
