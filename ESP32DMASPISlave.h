@@ -22,6 +22,11 @@
     }
 #endif
 
+#if CONFIG_IDF_TARGET_ESP32S2
+    #define VSPI FSPI
+    #define VSPI_HOST FSPI_HOST
+#endif
+
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 
 void spi_slave_setup_done(spi_slave_transaction_t* trans);
