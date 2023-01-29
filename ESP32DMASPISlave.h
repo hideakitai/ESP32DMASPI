@@ -22,10 +22,18 @@
     }
 #endif
 
+#ERROR TEST-PING
 #if CONFIG_IDF_TARGET_ESP32S2
     #define VSPI FSPI
     #define VSPI_HOST FSPI_HOST
 #endif
+#if defined(CONFIG_IDF_TARGET_ESP32S3)
+    #WARNING PING
+    #define VSPI FSPI
+    // #define VSPI_HOST FSPI_HOST
+    #define HSPI_HOST SPI3_HOST
+#endif
+
 
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 

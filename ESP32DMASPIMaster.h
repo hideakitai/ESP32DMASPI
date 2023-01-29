@@ -26,6 +26,27 @@
     #define VSPI FSPI
     #define VSPI_HOST FSPI_HOST
 #endif
+#if CONFIG_IDF_TARGET_ESP32S3
+    #warning ESP32-S3!!!
+    #define VSPI FSPI
+    #define VSPI_HOST FSPI_HOST
+    // #define HSPI SPI3
+    #define HSPI_HOST SPI3_HOST
+#endif
+
+// https://github.com/espressif/esp-idf/blob/master/components/hal/include/hal/spi_types.h#L78
+// alias for different chips, **deprecated for the chips after esp32s2**
+#ifdef CONFIG_IDF_TARGET_ESP32
+    #define SPI_HOST    SPI1_HOST
+    #define HSPI_HOST   SPI2_HOST
+    #define VSPI_HOST   SPI3_HOST
+#elif CONFIG_IDF_TARGET_ESP32S2 || CONFIG_IDF_TARGET_ESP32S3
+    // SPI_HOST (SPI1_HOST) is not supported by the SPI Master and SPI Slave driver on ESP32-S2 and later
+    #define SPI_HOST    SPI1_HOST
+    #define FSPI_HOST   SPI2_HOST
+    #define HSPI_HOST   SPI3_HOST
+#endif
+
 
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 
