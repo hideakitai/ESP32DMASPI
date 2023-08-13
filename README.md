@@ -59,8 +59,9 @@ void setup() {
     master.setMaxTransferSize(BUFFER_SIZE);  // default: 4092 bytes
 
     // begin() after setting
-    master.begin();  // HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
-                     // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+    // note: the default pins are different depending on the board
+    // please refer to README Section "SPI Buses and SPI Pins" for more details
+    master.begin();  // HSPI
 }
 
 void loop() {
@@ -94,8 +95,9 @@ void setup() {
     slave.setMaxTransferSize(BUFFER_SIZE);
 
     // begin() after setting
-    slave.begin();  // HSPI = CS: 15, CLK: 14, MOSI: 13, MISO: 12 -> default
-                    // VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
+    // note: the default pins are different depending on the board
+    // please refer to README Section "SPI Buses and SPI Pins" for more details
+    slave.begin();  // HSPI
 }
 
 void loop() {
@@ -116,16 +118,58 @@ void loop() {
 }
 ```
 
+## SPI Buses and SPI Pins
+
+This library's `bool begin(const uint8_t spi_bus = HSPI)` function uses `HSPI` as the default SPI bus as same as `SPI` library of `arduino-esp32` ([reference](https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.h#L61)).
+
+The pins for SPI buses are automatically attached as follows. "Default SPI Pins" means the pins defined there are the same as `MOSI`, `MISO`, `SCK`, and `SS`.
+
+| Board     | SPI       | MOSI | MISO | SCK | SS  | Default SPI Pins |
+| --------- | --------- | ---- | ---- | --- | --- | ---------------- |
+| `esp32`   | HSPI      | 13   | 12   | 14  | 15  | No               |
+| `esp32`   | VSPI/FSPI | 23   | 19   | 18  | 5   | Yes              |
+| `esp32s2` | HSPI/FSPI | 35   | 37   | 36  | 34  | Yes              |
+| `esp32s3` | HSPI/FSPI | 11   | 13   | 12  | 10  | Yes              |
+| `esp32c3` | HSPI/FSPI | 6    | 5    | 4   | 7   | Yes              |
+
+Depending on your board, the default SPI pins are defined in `pins_arduino.h`. For example, `esp32`'s default SPI pins are found [here](https://github.com/espressif/arduino-esp32/blob/e1f14331f173a00a9062f616bc9a62c358b9076f/variants/esp32/pins_arduino.h#L20-L23) (`MOSI: 23, MISO: 19, SCK: 18, SS: 5`). Please refer to [arduino-esp32/variants](https://github.com/espressif/arduino-esp32/tree/e1f14331f173a00a9062f616bc9a62c358b9076f/variants)  for your board's default SPI pins.
+
+The supported SPI buses are different from the ESP32 chip. Please note that there may be a restriction to use `FSPI` for your SPI bus. (Note: though `arduino-esp32` still uses `FSPI` and `HSPI` for all chips (v2.0.11), these are deprecated for the chips after `esp32s2`)
+
+| Chip     | FSPI              | HSPI              | VSPI               |
+| -------- | ----------------- | ----------------- | ------------------ |
+| ESP32    | SPI1_HOST(`0`) [^1] | SPI2_HOST(`1`) [^2] | SPI3_HOST (`2`) [^3] |
+| ESP32-S2 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                  |
+| ESP32-S3 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                  |
+| ESP32-C3 | SPI2_HOST(`1`)      | SPI2_HOST(`1`)      | -                  |
+
+[^1]: SPI bus attached to the flash (can use the same data lines but different SS)
+[^2]: SPI bus normally mapped to pins 12 - 15 on ESP32 but can be matrixed to any pins
+[^3]: SPI bus normally attached to pins 5, 18, 19, and 23 on ESP32 but can be matrixed to any pins
+
+<details>
+<summary>Reference</summary>
+
+- https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/spi_master.html
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.cpp#L346-L350
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.c#L719-L752
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/driver/include/driver/sdspi_host.h#L23-L29
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L26-L31
+- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L77-L87
+
+</details>
+
+
 ## APIs
 
 ### Master
 
 ```C++
-// use HSPI or VSPI with default pin assignment
-// VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
-// HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
+// use SPI with the default pin assignment
 bool begin(const uint8_t spi_bus = HSPI);
-// use HSPI or VSPI with your own pin assignment
+// use SPI with your own pin assignment
 bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
@@ -177,11 +221,9 @@ void setDMAChannel(const uint8_t c);            // default: auto
 ### Slave
 
 ```C++
-// use HSPI or VSPI with default pin assignment
-// VSPI (CS:  5, CLK: 18, MOSI: 23, MISO: 19)
-// HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12) -> default
+// use SPI with the default pin assignment
 bool begin(const uint8_t spi_bus = HSPI);
-// use HSPI or VSPI with your own pin assignment
+// use SPI with your own pin assignment
 bool begin(const uint8_t spi_bus, const int8_t sck, const int8_t miso, const int8_t mosi, const int8_t ss);
 bool end();
 
