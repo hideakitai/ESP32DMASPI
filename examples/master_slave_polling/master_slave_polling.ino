@@ -3,6 +3,10 @@
 
 #include "helper.h"
 
+#ifndef CONFIG_IDF_TARGET_ESP32
+#error This example supports only ESP32 borads
+#endif
+
 ESP32DMASPI::Master master;
 ESP32DMASPI::Slave slave;
 
