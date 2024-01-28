@@ -15,7 +15,11 @@ void userTransactionCallback(spi_slave_transaction_t *trans, void *arg)
 {
     // NOTE: here is ISR context
     int level = *((int *)arg);
+#ifdef CONFIG_IDF_TARGET_ESP32
+    digitalWrite(2, level);
+#else
     digitalWrite(LED_BUILTIN, level);
+#endif
 }
 
 void setup()
