@@ -3,7 +3,7 @@
 
 ESP32DMASPI::Master master;
 
-static constexpr size_t BUFFER_SIZE = 256;
+static constexpr size_t BUFFER_SIZE = 256; // should be multiple of 4
 static constexpr size_t QUEUE_SIZE = 1;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;
@@ -54,6 +54,9 @@ void loop()
 
     // if you need, you can handle transfer result (you can ignore this if you don't need)
     while (master.numTransactionsCompleted()) {
+        // process received data from slave
+        Serial.println("all queued transactions completed. start verifying received data from slave");
+
         // get the oldest transfer result
         const size_t received_bytes = master.numBytesReceived();
 
@@ -61,7 +64,7 @@ void loop()
         if (verifyAndDumpDifference("master", dma_tx_buf, BUFFER_SIZE, "slave", dma_rx_buf, received_bytes)) {
             Serial.println("successfully received expected data from slave");
         } else {
-            Serial.println("Unexpected difference found between master/slave data");
+            Serial.println("unexpected difference found between master/slave data");
         }
     }
 }

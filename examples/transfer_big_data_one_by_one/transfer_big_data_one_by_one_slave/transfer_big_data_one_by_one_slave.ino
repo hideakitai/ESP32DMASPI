@@ -3,7 +3,7 @@
 
 ESP32DMASPI::Slave slave;
 
-static constexpr size_t BUFFER_SIZE = 256;
+static constexpr size_t BUFFER_SIZE = 256; // should be multiple of 4
 static constexpr size_t QUEUE_SIZE = 1;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;

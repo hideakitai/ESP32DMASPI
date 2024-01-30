@@ -3,8 +3,8 @@
 
 ESP32DMASPI::Slave slave;
 
-static constexpr size_t BUFFER_SIZE = 256;
-static constexpr size_t QUEUE_SIZE = 2;
+static constexpr size_t BUFFER_SIZE = 256; // should be multiple of 4
+static constexpr size_t QUEUE_SIZE = 1;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;
 
@@ -20,7 +20,7 @@ void setup()
 
     slave.setDataMode(SPI_MODE0);           // default: SPI_MODE0
     slave.setMaxTransferSize(BUFFER_SIZE);  // default: 4092 bytes
-    slave.setQueueSize(QUEUE_SIZE);         // default: 1, requres 2 in this example
+    slave.setQueueSize(QUEUE_SIZE);         // default: 1
 
     // begin() after setting
     slave.begin();  // default: HSPI (please refer README for pin assignments)
@@ -36,14 +36,9 @@ void loop()
         Serial.println("initialize tx/rx buffers");
         initializeBuffers(dma_tx_buf, dma_rx_buf, BUFFER_SIZE, 0);
 
-        // queue multiple transactions
-        Serial.println("queue multiple transactions");
-        // in this example, the master sends some data first,
-        slave.queue(NULL, dma_rx_buf, BUFFER_SIZE);
-        // and the slave sends same data after that
-        slave.queue(dma_tx_buf, NULL, BUFFER_SIZE);
-
-        // finally, we should trigger transaction in the background
+        // queue transaction and trigger it right now
+        Serial.println("execute transaction in the background");
+        slave.queue(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
         slave.trigger();
 
         Serial.println("wait for the completion of the queued transactions...");
@@ -57,7 +52,7 @@ void loop()
         // process received data from slave
         Serial.println("all queued transactions completed. start verifying received data from slave");
 
-        // get received bytes for all transactions
+        // get the oldeest transfer result
         size_t received_bytes = slave.numBytesReceived();
 
         // verify and dump difference with received data
