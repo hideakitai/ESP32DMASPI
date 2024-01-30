@@ -8,6 +8,22 @@ static constexpr size_t QUEUE_SIZE = 1;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;
 
+// user-defined callback arguments
+volatile static size_t count_pre_cb = 0;
+volatile static size_t count_post_cb = 0;
+// definition of user callback
+void IRAM_ATTR userTransactionCallback(spi_transaction_t *trans, void *arg)
+{
+    // NOTE: here is an ISR Context
+    //       there are significant limitations on what can be done with ISRs,
+    //       so use this feature carefully!
+
+    // convert user-defined argument from (void *) -> (size_t *)
+    size_t *count = (size_t *)arg;
+    // increment count (this should be locked or atomic operation, but this is simplified)
+    *count += 1;
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -21,7 +37,7 @@ void setup()
     master.setDataMode(SPI_MODE0);           // default: SPI_MODE0
     master.setFrequency(1000000);            // default: 8MHz (too fast for bread board...)
     master.setMaxTransferSize(BUFFER_SIZE);  // default: 4092 bytes
-    master.setQueueSize(QUEUE_SIZE);         // default: 1
+    master.setQueueSize(QUEUE_SIZE);         // default: 1, requres 2 in this example
 
     // begin() after setting
     master.begin();  // default: HSPI (CS: 15, CLK: 14, MOSI: 13, MISO: 12)
@@ -33,6 +49,19 @@ void setup()
 
 void loop()
 {
+    // print counts if changed
+    // (this should be locked or atomic operation, but this is simplified)
+    static size_t prev_count_pre_cb = count_pre_cb;
+    if (count_pre_cb != prev_count_pre_cb) {
+        Serial.printf("count_pre_cb changed: %u -> %u\n", prev_count_pre_cb, count_pre_cb);
+        prev_count_pre_cb = count_pre_cb;
+    }
+    static size_t prev_count_post_cb = count_post_cb;
+    if (count_post_cb != prev_count_post_cb) {
+        Serial.printf("count_post_cb changed: %u -> %u\n", prev_count_post_cb, count_post_cb);
+        prev_count_post_cb = count_post_cb;
+    }
+
     // if no transaction is in flight and interval has passed, queue new transactions
     static uint32_t last_sent_ms = millis();
     if (master.numTransactionsInFlight() == 0 && millis() > last_sent_ms + 2000) {
@@ -40,8 +69,12 @@ void loop()
         Serial.println("initialize tx/rx buffers");
         initializeBuffers(dma_tx_buf, dma_rx_buf, BUFFER_SIZE, 0);
 
+        Serial.println("execute transaction in the background with callbacks");
+        // with user-defined ISR callback that is called before/after transaction start
+        // you can set these callbacks and arguments before each queue()
+        master.setUserPreCbAndArg(userTransactionCallback, (void *)&count_pre_cb);
+        master.setUserPostCbAndArg(userTransactionCallback, (void *)&count_post_cb);
         // queue transaction and trigger it right now
-        Serial.println("execute transaction in the background");
         master.queue(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
         master.trigger();
 

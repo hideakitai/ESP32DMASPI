@@ -8,6 +8,22 @@ static constexpr size_t QUEUE_SIZE = 1;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;
 
+// user-defined callback arguments
+volatile static size_t count_post_setup_cb = 0;
+volatile static size_t count_post_trans_cb = 0;
+// definition of user callback
+void IRAM_ATTR userTransactionCallback(spi_slave_transaction_t *trans, void *arg)
+{
+    // NOTE: here is an ISR Context
+    //       there are significant limitations on what can be done with ISRs,
+    //       so use this feature carefully!
+
+    // convert user-defined argument from (void *) -> (size_t *)
+    size_t *count = (size_t *)arg;
+    // increment count (this should be locked or atomic operation, but this is simplified)
+    *count += 1;
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -30,14 +46,31 @@ void setup()
 
 void loop()
 {
+    // print counts if changed
+    // (this should be locked or atomic operation, but this is simplified)
+    static size_t prev_count_post_setup_cb = count_post_setup_cb;
+    if (count_post_setup_cb != prev_count_post_setup_cb) {
+        Serial.printf("count_post_setup_cb changed: %u -> %u\n", prev_count_post_setup_cb, count_post_setup_cb);
+        prev_count_post_setup_cb = count_post_setup_cb;
+    }
+    static size_t prev_count_post_trans_cb = count_post_trans_cb;
+    if (count_post_trans_cb != prev_count_post_trans_cb) {
+        Serial.printf("count_post_trans_cb changed: %u -> %u\n", prev_count_post_trans_cb, count_post_trans_cb);
+        prev_count_post_trans_cb = count_post_trans_cb;
+    }
+
     // if no transaction is in flight and all results are handled, queue new transactions
     if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == 0) {
         // initialize tx/rx buffers
         Serial.println("initialize tx/rx buffers");
         initializeBuffers(dma_tx_buf, dma_rx_buf, BUFFER_SIZE, 0);
 
+        Serial.println("execute transaction in the background with callbacks");
+        // with user-defined ISR callback that is called before/after transaction start
+        // you can set these callbacks and arguments before each queue()
+        slave.setUserPostSetupCbAndArg(userTransactionCallback, (void *)&count_post_setup_cb);
+        slave.setUserPostTransCbAndArg(userTransactionCallback, (void *)&count_post_trans_cb);
         // queue transaction and trigger it right now
-        Serial.println("execute transaction in the background");
         slave.queue(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
         slave.trigger();
 

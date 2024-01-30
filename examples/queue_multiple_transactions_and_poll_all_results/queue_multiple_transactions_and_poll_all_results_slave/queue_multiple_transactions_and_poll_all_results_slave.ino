@@ -3,7 +3,7 @@
 
 ESP32DMASPI::Slave slave;
 
-static constexpr size_t BUFFER_SIZE = 256;
+static constexpr size_t BUFFER_SIZE = 256; // should be multiple of 4
 static constexpr size_t QUEUE_SIZE = 2;
 uint8_t *dma_tx_buf;
 uint8_t *dma_rx_buf;
@@ -65,7 +65,7 @@ void loop()
         if (verifyAndDumpDifference("slave", dma_tx_buf, BUFFER_SIZE, "master", dma_rx_buf, received_bytes[0])) {
             Serial.println("successfully received expected data from master");
         } else {
-            Serial.println("Unexpected difference found between master/slave data");
+            Serial.println("unexpected difference found between master/slave data");
         }
     }
 }

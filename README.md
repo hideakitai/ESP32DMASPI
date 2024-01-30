@@ -24,10 +24,10 @@ This is the SPI library to send/receive large transactions with DMA. Please use 
 
 | IDE         | ESP32 Board Version |
 | ----------- | ------------------- |
-| Arduino IDE | `>= 2.0.0`          |
-| PlatformIO  | `>= 4.0.0`          |
+| Arduino IDE | `>= 2.0.11`         |
+| PlatformIO  | `>= 5.0.0`          |
 
-## WARNING
+## Known Issues for ESP32 SPI driver
 
 - There is known [issue](https://www.esp32.com/viewtopic.php?f=12&t=7339&sid=2257561718efae97d5b805c039b5764e) that last 4 bytes are missing if DMA is used with SPI Slave
   - you need to send 4 bytes more to send all required bytes to ESP32 SPI Slave with DMA
@@ -35,6 +35,17 @@ This is the SPI library to send/receive large transactions with DMA. Please use 
   - Please try SPI mode 0 for this issue
   - But SPI mode 1 or 3 is required based on the [official doc](https://docs.espressif.com/projects/esp-idf/en/stable/esp32/api-reference/peripherals/spi_slave.html#restrictions-and-known-issues)
   - Please use this library and SPI modes for your own risk
+
+## Notes for Communication Errors
+
+If you have communication errors when trying examples, please check the following points.
+
+- Check that the SPI Mode is the same
+- Check if the pin number and connection destination are correct
+- Connect pins as short as possible
+- Be careful of signal line crosstalk (Be careful not to tangle wires)
+- If you are using two devices, ensure they share a common ground level
+- If you still have communication problems, try a lower frequency (1MHz or less)
 
 ## Usage
 
