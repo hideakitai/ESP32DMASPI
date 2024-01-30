@@ -134,7 +134,8 @@ void spi_slave_task(void *arg)
             // execute new transaction if transaction request received from main task
             ESP_LOGD(TAG, "new transaction request received (size = %u)", trans_ctx.size);
             for (size_t i = 0; i < trans_ctx.size; ++i) {
-                esp_err_t err = spi_slave_queue_trans(ctx->host, trans_ctx.trans, SLAVE_QUEUE_TRANS_TIMEOUT_TICKS);
+                spi_slave_transaction_t *trans = &trans_ctx.trans[i];
+                esp_err_t err = spi_slave_queue_trans(ctx->host, trans, SLAVE_QUEUE_TRANS_TIMEOUT_TICKS);
                 if (err != ESP_OK) {
                     ESP_LOGE(TAG, "failed to execute spi_slave_queue_trans(): %d", err);
                 }
