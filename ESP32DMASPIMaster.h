@@ -43,6 +43,8 @@ static QueueHandle_t s_in_flight_mailbox_handle {NULL};
 
 using spi_master_user_cb_t = std::function<void(spi_transaction_t*, void*)>;
 
+void spi_master_pre_cb(spi_transaction_t* trans);
+void spi_master_post_cb(spi_transaction_t* trans);
 struct spi_master_context_t
 {
     spi_device_interface_config_t if_cfg {
@@ -58,8 +60,8 @@ struct spi_master_context_t
         .spics_io_num = SS,
         .flags = 0,
         .queue_size = 1,
-        .pre_cb = NULL,
-        .post_cb = NULL,
+        .pre_cb = spi_master_pre_cb,
+        .post_cb = spi_master_post_cb,
     };
     spi_bus_config_t bus_cfg {
         .mosi_io_num = MOSI, // union with data0_io_num
@@ -625,8 +627,6 @@ private:
     {
         this->ctx.host = this->hostFromBusNumber(spi_bus);
         this->ctx.bus_cfg.flags |= SPICOMMON_BUSFLAG_MASTER;
-        this->ctx.if_cfg.pre_cb = spi_master_pre_cb;
-        this->ctx.if_cfg.post_cb = spi_master_post_cb;
         this->transactions.reserve(this->ctx.if_cfg.queue_size);
 
         // create spi master task

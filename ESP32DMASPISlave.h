@@ -41,6 +41,8 @@ static QueueHandle_t s_in_flight_mailbox_handle {NULL};
 
 using spi_slave_user_cb_t = std::function<void(spi_slave_transaction_t*, void*)>;
 
+void spi_slave_post_setup_cb(spi_slave_transaction_t* trans);
+void spi_slave_post_trans_cb(spi_slave_transaction_t* trans);
 struct spi_slave_context_t
 {
     spi_slave_interface_config_t if_cfg {
@@ -48,8 +50,8 @@ struct spi_slave_context_t
         .flags = 0,
         .queue_size = 1,
         .mode = SPI_MODE0,
-        .post_setup_cb = NULL,
-        .post_trans_cb = NULL,
+        .post_setup_cb = spi_slave_post_setup_cb,
+        .post_trans_cb = spi_slave_post_trans_cb,
     };
     spi_bus_config_t bus_cfg {
         .mosi_io_num = MOSI, // union with data0_io_num
@@ -561,8 +563,6 @@ private:
     {
         this->ctx.host = this->hostFromBusNumber(spi_bus);
         this->ctx.bus_cfg.flags |= SPICOMMON_BUSFLAG_SLAVE;
-        this->ctx.if_cfg.post_setup_cb = spi_slave_post_setup_cb;
-        this->ctx.if_cfg.post_trans_cb = spi_slave_post_trans_cb;
         this->transactions.reserve(this->ctx.if_cfg.queue_size);
 
         // create spi slave task
