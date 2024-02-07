@@ -27,7 +27,7 @@
 ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 
 static constexpr const char *TAG = "ESP32DMASPIMaster";
-static constexpr int SPI_MASTER_TASK_STASCK_SIZE = 1024 * 8;
+static constexpr int SPI_MASTER_TASK_STASCK_SIZE = 1024 * 2;
 static constexpr int SPI_MASTER_TASK_PRIORITY = 5;
 
 static constexpr int DEVICE_QUEUE_TRANS_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
