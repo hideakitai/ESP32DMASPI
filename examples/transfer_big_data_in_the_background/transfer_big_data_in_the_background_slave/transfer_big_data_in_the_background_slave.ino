@@ -31,7 +31,7 @@ void setup()
 void loop()
 {
     // if no transaction is in flight and all results are handled, queue new transactions
-    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == 0) {
+    if (slave.hasTransactionsCompletedAndAllResultsHandled()) {
         // initialize tx/rx buffers
         Serial.println("initialize tx/rx buffers");
         initializeBuffers(dma_tx_buf, dma_rx_buf, BUFFER_SIZE, 0);
@@ -48,7 +48,7 @@ void loop()
     // NOTE: you can't touch dma_tx/rx_buf because it's in-flight in the background
 
     // if all transactions are completed and all results are ready, handle results
-    if (slave.numTransactionsInFlight() == 0 && slave.numTransactionsCompleted() == QUEUE_SIZE) {
+    if (slave.hasTransactionsCompletedAndAllResultsReady(QUEUE_SIZE)) {
         // process received data from slave
         Serial.println("all queued transactions completed. start verifying received data from slave");
 

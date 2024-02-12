@@ -30,9 +30,6 @@ static constexpr const char *TAG = "ESP32DMASPIMaster";
 static constexpr int SPI_MASTER_TASK_STASCK_SIZE = 1024 * 2;
 static constexpr int SPI_MASTER_TASK_PRIORITY = 5;
 
-static constexpr int DEVICE_QUEUE_TRANS_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
-static constexpr int DEVICE_GET_TRANS_RESULT_TIMEOUT_TICKS = portMAX_DELAY;
-
 static QueueHandle_t s_trans_queue_handle {NULL};
 static constexpr int SEND_TRANS_QUEUE_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
 static constexpr int RECV_TRANS_QUEUE_TIMEOUT_TICKS = portMAX_DELAY;
@@ -86,6 +83,7 @@ struct spi_transaction_context_t
 {
     spi_transaction_ext_t *trans_ext;
     size_t size;
+    TickType_t timeout_ticks;
 };
 
 struct spi_master_cb_user_context_t
@@ -150,25 +148,32 @@ void spi_master_task(void *arg)
 
             // execute new transaction if transaction request received from main task
             ESP_LOGD(TAG, "new transaction request received (size = %u)", trans_ctx.size);
+            std::vector<esp_err_t> errs;
+            errs.reserve(trans_ctx.size);
             for (size_t i = 0; i < trans_ctx.size; ++i) {
                 spi_transaction_t *trans = (spi_transaction_t*)(&trans_ctx.trans_ext[i]);
-                esp_err_t err = spi_device_queue_trans(device_handle, trans, DEVICE_QUEUE_TRANS_TIMEOUT_TICKS);
+                esp_err_t err = spi_device_queue_trans(device_handle, trans, trans_ctx.timeout_ticks);
                 if (err != ESP_OK) {
-                    ESP_LOGE(TAG, "failed to execute spi_device_queue_trans(): %d", err);
+                    ESP_LOGE(TAG, "failed to execute spi_device_queue_trans(): 0x%X", err);
                 }
+                errs.push_back(err);
             }
 
             // wait for the completion of all of the queued transactions
             for (size_t i = 0; i < trans_ctx.size; ++i) {
                 // wait for completion of next transaction
                 size_t num_received_bytes = 0;
-                spi_transaction_t *rtrans;
-                esp_err_t err = spi_device_get_trans_result(device_handle, &rtrans, DEVICE_GET_TRANS_RESULT_TIMEOUT_TICKS);
-                if (err != ESP_OK) {
-                    ESP_LOGE(TAG, "failed to execute spi_device_get_trans_result(): %d", err);
+                if (errs[i] == ESP_OK) {
+                    spi_transaction_t *rtrans;
+                    esp_err_t err = spi_device_get_trans_result(device_handle, &rtrans, trans_ctx.timeout_ticks);
+                    if (err != ESP_OK) {
+                        ESP_LOGE(TAG, "failed to execute spi_device_get_trans_result(): 0x%X", err);
+                    } else {
+                        num_received_bytes = rtrans->rxlength / 8; // bit -> byte
+                        ESP_LOGD(TAG, "transaction complete: %d bits (%d bytes) received", rtrans->rxlength, num_received_bytes);
+                    }
                 } else {
-                    num_received_bytes = rtrans->rxlength / 8; // bit -> byte
-                    ESP_LOGD(TAG, "transaction complete: %d bits (%d bytes) received", rtrans->rxlength, num_received_bytes);
+                    ESP_LOGE(TAG, "skip spi_device_get_trans_result() because queue was failed: index = %u", i);
                 }
 
                 // send the received bytes back to main task
@@ -315,6 +320,7 @@ public:
     /// @param tx_buf pointer to the buffer of data to be sent
     /// @param rx_buf pointer to the buffer of data to be received
     /// @param size size of data to be sent
+    /// @param timeout_ms timeout in milliseconds
     /// @return the size of received bytes
     /// @note  this function is blocking until the completion of transmission
     size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0)
@@ -331,6 +337,7 @@ public:
     /// @param tx_buf pointer to the buffer of data to be sent
     /// @param rx_buf pointer to the buffer of data to be received
     /// @param size size of data to be sent
+    /// @param timeout_ms timeout in milliseconds
     /// @return the size of received bytes
     /// @note  this function is blocking until the completion of transmission
     size_t transfer(
@@ -407,21 +414,33 @@ public:
     /// @return a vector of the received bytes for all transactions
     std::vector<size_t> wait(uint32_t timeout_ms = 0)
     {
-        if (!this->trigger()) {
+        size_t num_will_be_queued = this->transactions.size();
+        if (!this->trigger(timeout_ms)) {
             return std::vector<size_t>();
         }
-        return this->waitTransaction(timeout_ms);
+        return this->waitTransaction(num_will_be_queued);
     }
 
     /// @brief execute queued transactions asynchronously in the background (without blocking)
     ///        numBytesReceivedAll() or numBytesReceived() is required to confirm the results of transactions
     ///        rx_buf is automatically updated after the completion of each transaction.
+    /// @param timeout_ms timeout in milliseconds
     /// @return true if the transaction is queued successfully, false otherwise
-    bool trigger()
+    bool trigger(uint32_t timeout_ms = 0)
     {
+        if (this->transactions.empty()) {
+            ESP_LOGW(TAG, "failed to trigger transaction: no transaction is queued");
+            return false;
+        }
+        if (this->numTransactionsInFlight() > 0) {
+            ESP_LOGW(TAG, "failed to trigger transaction: there are already in-flight transactions");
+            return false;
+        }
+
         spi_transaction_context_t trans_ctx {
             .trans_ext = new spi_transaction_ext_t[this->transactions.size()],
             .size = this->transactions.size(),
+            .timeout_ticks = timeout_ms == 0 ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms),
         };
         for (size_t i = 0; i < this->transactions.size(); i++) {
             trans_ctx.trans_ext[i] = std::move(this->transactions[i]);
@@ -482,6 +501,21 @@ public:
             results.emplace_back(this->numBytesReceived());
         }
         return results;
+    }
+
+    /// @brief check if the queued transactions are completed and all results are handled
+    /// @return true if the queued transactions are completed and all results are handled, false otherwise
+    bool hasTransactionsCompletedAndAllResultsHandled()
+    {
+        return this->numTransactionsInFlight() == 0 && this->numTransactionsCompleted() == 0;
+    }
+
+    /// @brief check if the queued transactions are completed
+    /// @param num_queued the number of queued transactions
+    /// @return true if the queued transactions are completed, false otherwise
+    bool hasTransactionsCompletedAndAllResultsReady(size_t num_queued)
+    {
+        return this->numTransactionsInFlight() == 0 && this->numTransactionsCompleted() == num_queued;
     }
 
     // ===== Main Configurations =====
@@ -685,15 +719,13 @@ private:
         this->transactions.push_back(std::move(trans_ext));
     }
 
-    std::vector<size_t> waitTransaction(uint32_t timeout_ms)
+    std::vector<size_t> waitTransaction(size_t num_will_be_queued)
     {
-        uint32_t start_ms = millis();
-        while ((timeout_ms == 0) ? true : (millis() < start_ms + timeout_ms)) {
-            if (this->numTransactionsInFlight() == 0) {
-                return this->numBytesReceivedAll();
-            }
+        // transactions inside of spi task will be timeout if failed in the background
+        while (!this->hasTransactionsCompletedAndAllResultsReady(num_will_be_queued)) {
+            vTaskDelay(1);
         }
-        return std::vector<size_t>();
+        return this->numBytesReceivedAll();
     }
 };
 
