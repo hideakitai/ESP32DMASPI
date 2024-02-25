@@ -117,7 +117,7 @@ void spi_slave_task(void *arg)
     // initialize queues
     s_trans_queue_handle = xQueueCreate(1, sizeof(spi_transaction_context_t));
     assert(s_trans_queue_handle != NULL);
-    s_trans_result_handle = xQueueCreate(ctx->if_cfg.queue_size, sizeof(size_t));
+    s_trans_result_handle = xQueueCreate(ctx->if_cfg.queue_size, sizeof(int64_t));
     assert(s_trans_result_handle != NULL);
     s_in_flight_mailbox_handle = xQueueCreate(1, sizeof(size_t));
     assert(s_in_flight_mailbox_handle != NULL);
@@ -147,17 +147,19 @@ void spi_slave_task(void *arg)
             // wait for the completion of all of the queued transactions
             for (size_t i = 0; i < trans_ctx.size; ++i) {
                 // wait for completion of next transaction
-                size_t num_received_bytes = 0;
+                int64_t num_received_bytes = 0;
                 if (errs[i] == ESP_OK) {
                     spi_slave_transaction_t *rtrans;
                     esp_err_t err = spi_slave_get_trans_result(ctx->host, &rtrans, trans_ctx.timeout_ticks);
                     if (err != ESP_OK) {
+                        num_received_bytes = err * -1;
                         ESP_LOGE(TAG, "failed to execute spi_slave_get_trans_result(): 0x%X", err);
                     } else {
                         num_received_bytes = rtrans->trans_len / 8; // bit -> byte
                         ESP_LOGD(TAG, "transaction complete: %d bits (%d bytes) received", rtrans->trans_len, num_received_bytes);
                     }
                 } else {
+                    num_received_bytes = err * -1;
                     ESP_LOGE(TAG, "skip spi_slave_get_trans_result() because queue was failed: index = %u", i);
                 }
 
@@ -304,9 +306,9 @@ public:
     /// @param rx_buf pointer to the buffer of data to be received
     /// @param size size of data to be sent
     /// @param timeout_ms timeout in milliseconds
-    /// @return the size of received bytes
+    /// @return the size of received bytes if success, esp_err_t * -1 if failed
     /// @note  this function is blocking until the completion of transmission
-    size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0)
+    int64_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0)
     {
         return this->transfer(0, tx_buf, rx_buf, size, timeout_ms);
     }
@@ -316,9 +318,9 @@ public:
     /// @param rx_buf pointer to the buffer of data to be received
     /// @param size size of data to be sent
     /// @param timeout_ms timeout in milliseconds
-    /// @return the size of received bytes
+    /// @return the size of received bytes if success, esp_err_t * -1 if failed
     /// @note  this function is blocking until the completion of transmission
-    size_t transfer(
+    int64_t transfer(
         uint32_t flags,
         const uint8_t* tx_buf,
         uint8_t* rx_buf,
@@ -380,12 +382,12 @@ public:
     /// @brief execute queued transactions and wait for the completion.
     ///        rx_buf is automatically updated after the completion of each transaction.
     /// @param timeout_ms timeout in milliseconds
-    /// @return a vector of the received bytes for all transactions
-    std::vector<size_t> wait(uint32_t timeout_ms = 0)
+    /// @return a vector of the received bytes for all transactions if success, esp_err_t * -1 if failed
+    std::vector<int64_t> wait(uint32_t timeout_ms = 0)
     {
         size_t num_will_be_queued = this->transactions.size();
         if (!this->trigger(timeout_ms)) {
-            return std::vector<size_t>();
+            return std::vector<int64_t>();
         }
         return this->waitTransaction(num_will_be_queued);
     }
@@ -441,13 +443,13 @@ public:
         return uxQueueMessagesWaiting(s_trans_result_handle);
     }
 
-    /// @brief return the oldest result of the completed transaction (received bytes)
-    /// @return the oldest result of the completed transaction (received bytes)
+    /// @brief return the oldest result of the completed transaction (received bytes) if success, esp_err_t * -1 if failed
+    /// @return the oldest result of the completed transaction (received bytes) if success, esp_err_t * -1 if failed
     /// @note this method pops front of the result queue
-    size_t numBytesReceived()
+    int64_t numBytesReceived()
     {
         if (this->numTransactionsCompleted() > 0) {
-            size_t num_received_bytes = 0;
+            int64_t num_received_bytes = 0;
             if (xQueueReceive(s_trans_result_handle, &num_received_bytes, RECV_TRANS_RESULT_TIMEOUT_TICKS)) {
                 return num_received_bytes;
             } else {
@@ -458,12 +460,12 @@ public:
         return 0;
     }
 
-    /// @brief return all results of the completed transactions (received bytes)
-    /// @return all results of the completed transactions (received bytes)
+    /// @brief return all results of the completed transactions (received bytes) if success, esp_err_t * -1 if failed
+    /// @return all results of the completed transactions (received bytes) if success, esp_err_t * -1 if failed
     /// @note this method pops front of the result queue
-    std::vector<size_t> numBytesReceivedAll()
+    std::vector<int64_t> numBytesReceivedAll()
     {
-        std::vector<size_t> results;
+        std::vector<int64_t> results;
         const size_t num_results = this->numTransactionsCompleted();
         results.reserve(num_results);
         for (size_t i = 0; i < num_results; ++i) {
@@ -630,7 +632,7 @@ private:
         this->transactions.push_back(std::move(trans));
     }
 
-    std::vector<size_t> waitTransaction(size_t num_will_be_queued)
+    std::vector<int64_t> waitTransaction(size_t num_will_be_queued)
     {
         // transactions inside of spi task will be timeout if failed in the background
         while (!this->hasTransactionsCompletedAndAllResultsReady(num_will_be_queued)) {

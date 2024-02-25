@@ -37,13 +37,17 @@ void loop()
     initializeBuffers(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
 
     // start and wait to complete one BIG transaction (same data will be received from slave)
-    const size_t received_bytes = master.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
-
-    // verify and dump difference with received data
-    if (verifyAndDumpDifference("master", dma_tx_buf, BUFFER_SIZE, "slave", dma_rx_buf, received_bytes)) {
-        Serial.println("successfully received expected data from slave");
+    const int64_t received_bytes = master.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
+    if (received_bytes < 0) {
+        const esp_err_t err = received_bytes * -1;
+        Serial.printf("transaction failed with error %u\n", err);
     } else {
-        Serial.println("unexpected difference found between master/slave data");
+        // verify and dump difference with received data
+        if (verifyAndDumpDifference("master", dma_tx_buf, BUFFER_SIZE, "slave", dma_rx_buf, received_bytes)) {
+            Serial.println("successfully received expected data from slave");
+        } else {
+            Serial.println("unexpected difference found between master/slave data");
+        }
     }
 
     delay(2500);  // slave will timeout after 2000ms

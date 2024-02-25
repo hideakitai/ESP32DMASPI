@@ -45,7 +45,7 @@ void loop()
     master.queue(NULL, dma_rx_buf, BUFFER_SIZE);
 
     Serial.println("wait for the completion of the queued transactions...");
-    const std::vector<size_t> received_bytes = master.wait();
+    const std::vector<int64_t> received_bytes = master.wait();
 
     // process received data from slave
     Serial.println("all queued transactions completed. start verifying received data from slave");
