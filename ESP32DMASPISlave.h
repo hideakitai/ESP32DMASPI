@@ -34,6 +34,9 @@ static constexpr int RECV_TRANS_QUEUE_TIMEOUT_TICKS = portMAX_DELAY;
 static QueueHandle_t s_trans_result_handle {NULL};
 static constexpr int SEND_TRANS_RESULT_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
 static constexpr int RECV_TRANS_RESULT_TIMEOUT_TICKS = 0;
+static QueueHandle_t s_trans_error_handle {NULL};
+static constexpr int SEND_TRANS_ERROR_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
+static constexpr int RECV_TRANS_ERROR_TIMEOUT_TICKS = 0;
 static QueueHandle_t s_in_flight_mailbox_handle {NULL};
 
 using spi_slave_user_cb_t = std::function<void(spi_slave_transaction_t*, void*)>;
@@ -119,6 +122,8 @@ void spi_slave_task(void *arg)
     assert(s_trans_queue_handle != NULL);
     s_trans_result_handle = xQueueCreate(ctx->if_cfg.queue_size, sizeof(size_t));
     assert(s_trans_result_handle != NULL);
+    s_trans_error_handle = xQueueCreate(ctx->if_cfg.queue_size, sizeof(esp_err_t));
+    assert(s_trans_error_handle != NULL);
     s_in_flight_mailbox_handle = xQueueCreate(1, sizeof(size_t));
     assert(s_in_flight_mailbox_handle != NULL);
 
@@ -145,6 +150,9 @@ void spi_slave_task(void *arg)
             }
 
             // wait for the completion of all of the queued transactions
+            // reset result/error queue first
+            xQueueReset(s_trans_result_handle);
+            xQueueReset(s_trans_error_handle);
             for (size_t i = 0; i < trans_ctx.size; ++i) {
                 // wait for completion of next transaction
                 size_t num_received_bytes = 0;
@@ -162,14 +170,12 @@ void spi_slave_task(void *arg)
                 }
 
                 // send the received bytes back to main task
-                if (uxQueueSpacesAvailable(s_trans_result_handle) == 0) {
-                    size_t discard_oldest_result = 0;
-                    if (!xQueueReceive(s_trans_result_handle, &discard_oldest_result, 0)) {
-                        ESP_LOGE(TAG, "failed to discard the oldest queued result");
-                    }
-                }
                 if (!xQueueSend(s_trans_result_handle, &num_received_bytes, SEND_TRANS_RESULT_TIMEOUT_TICKS)) {
                     ESP_LOGE(TAG, "failed to send a number of received bytes to main task: %d", err);
+                }
+                // send the transaction error back to main task
+                if (!xQueueSend(s_trans_error_handle, &errs[i], SEND_TRANS_ERROR_TIMEOUT_TICKS)) {
+                    ESP_LOGE(TAG, "failed to send a transaction error to main task: %d", err);
                 }
 
                 // update in-flight count
@@ -193,6 +199,7 @@ void spi_slave_task(void *arg)
 
     vQueueDelete(s_in_flight_mailbox_handle);
     vQueueDelete(s_trans_result_handle);
+    vQueueDelete(s_trans_error_handle);
     vQueueDelete(s_trans_queue_handle);
 
     spi_slave_free(ctx->host);
@@ -441,6 +448,13 @@ public:
         return uxQueueMessagesWaiting(s_trans_result_handle);
     }
 
+    /// @brief return the number of completed but not received transaction errors
+    /// @return the number of completed but not received transaction errors
+    size_t numTransactionErrors()
+    {
+        return uxQueueMessagesWaiting(s_trans_error_handle);
+    }
+
     /// @brief return the oldest result of the completed transaction (received bytes)
     /// @return the oldest result of the completed transaction (received bytes)
     /// @note this method pops front of the result queue
@@ -470,6 +484,37 @@ public:
             results.emplace_back(this->numBytesReceived());
         }
         return results;
+    }
+
+    /// @brief return the oldest error of the completed transaction
+    /// @return the oldest error of the completed transaction
+    /// @note this method pops front of the error queue
+    esp_err_t error()
+    {
+        if (this->numTransactionErrors() > 0) {
+            esp_err_t err;
+            if (xQueueReceive(s_trans_error_handle, &err, RECV_TRANS_ERROR_TIMEOUT_TICKS)) {
+                return err;
+            } else {
+                ESP_LOGE(TAG, "failed to receive queued error");
+                return ESP_FAIL;
+            }
+        }
+        return ESP_OK;
+    }
+
+    /// @brief return all errors of the completed transactions
+    /// @return all errors of the completed transactions
+    /// @note this method pops front of the error queue
+    std::vector<esp_err_t> errors()
+    {
+        std::vector<esp_err_t> errs;
+        const size_t num_errs = this->numTransactionErrors();
+        errs.reserve(num_errs);
+        for (size_t i = 0; i < num_errs; ++i) {
+            errs.emplace_back(this->error());
+        }
+        return errs;
     }
 
     /// @brief check if the queued transactions are completed and all results are handled
