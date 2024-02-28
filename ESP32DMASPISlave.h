@@ -159,7 +159,7 @@ void spi_slave_task(void *arg)
                         ESP_LOGD(TAG, "transaction complete: %d bits (%d bytes) received", rtrans->trans_len, num_received_bytes);
                     }
                 } else {
-                    num_received_bytes = errs[i] * -1;
+                    num_received_bytes = err * -1;
                     ESP_LOGE(TAG, "skip spi_slave_get_trans_result() because queue was failed: index = %u", i);
                 }
 
