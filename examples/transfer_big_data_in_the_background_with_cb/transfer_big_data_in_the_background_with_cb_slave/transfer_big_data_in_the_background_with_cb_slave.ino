@@ -86,18 +86,14 @@ void loop()
         Serial.println("all queued transactions completed. start verifying received data from slave");
 
         // get the oldeest transfer result
-        const int64_t received_bytes = slave.numBytesReceived();
-        if (received_bytes < 0) {
-            const esp_err_t err = received_bytes * -1;
-            Serial.printf("transaction failed with error %u\n", err);
+        size_t received_bytes = slave.numBytesReceived();
+
+        // verify and dump difference with received data
+        // NOTE: we need only 1st results (received_bytes[0])
+        if (verifyAndDumpDifference("slave", dma_tx_buf, BUFFER_SIZE, "master", dma_rx_buf, received_bytes)) {
+            Serial.println("successfully received expected data from master");
         } else {
-            // verify and dump difference with received data
-            // NOTE: we need only 1st results (received_bytes[0])
-            if (verifyAndDumpDifference("slave", dma_tx_buf, BUFFER_SIZE, "master", dma_rx_buf, received_bytes)) {
-                Serial.println("successfully received expected data from master");
-            } else {
-                Serial.println("Unexpected difference found between master/slave data");
-            }
+            Serial.println("Unexpected difference found between master/slave data");
         }
     }
 }

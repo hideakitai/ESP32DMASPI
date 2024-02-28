@@ -85,7 +85,7 @@ void loop()
     // do some initialization for tx_buf and rx_buf
 
     // start and wait to complete one BIG transaction (same data will be received from slave)
-    const int64_t received_bytes = master.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
+    const size_t received_bytes = master.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
 
     // do something with received_bytes and rx_buf if needed
 }
@@ -122,7 +122,7 @@ void loop()
     // do some initialization for tx_buf and rx_buf
 
     // start and wait to complete one BIG transaction (same data will be received from slave)
-    const int64_t received_bytes = slave.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
+    const size_t received_bytes = slave.transfer(dma_tx_buf, dma_rx_buf, BUFFER_SIZE);
 
     // do something with received_bytes and rx_buf if needed
 }
@@ -144,7 +144,7 @@ void loop()
     master.queue(NULL, dma_rx_buf, BUFFER_SIZE);
 
     // wait for the completion of the queued transactions
-    const std::vector<int64_t> received_bytes = master.wait();
+    const std::vector<size_t> received_bytes = master.wait();
 
     // do something with received_bytes and rx_buf if needed
 }
@@ -178,7 +178,7 @@ void loop()
     // if all transactions are completed and all results are ready, handle results
     if (master.hasTransactionsCompletedAndAllResultsReady(QUEUE_SIZE)) {
         // get received bytes for all transactions
-        const std::vector<int64_t> received_bytes = master.numBytesReceivedAll();
+        const std::vector<size_t> received_bytes = master.numBytesReceivedAll();
 
         // do something with received_bytes and rx_buf if needed
     }
@@ -248,8 +248,8 @@ void end();
 static uint8_t *allocDMABuffer(size_t n_bytes);
 
 /// @brief execute one transaction and wait for the completion
-int64_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0);
-int64_t transfer(uint8_t command_bits, uint8_t address_bits, uint8_t dummy_bits, uint32_t flags, uint16_t cmd, uint64_t addr, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms);
+size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0);
+size_t transfer(uint8_t command_bits, uint8_t address_bits, uint8_t dummy_bits, uint32_t flags, uint16_t cmd, uint64_t addr, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms);
 
 /// @brief queue transaction to internal transaction buffer.
 ///        To start transaction, wait() or trigger() must be called.
@@ -258,7 +258,7 @@ bool queue(uint8_t command_bits, uint8_t address_bits, uint8_t dummy_bits, uint3
 
 /// @brief execute queued transactions and wait for the completion.
 ///        rx_buf is automatically updated after the completion of each transaction.
-std::vector<int64_t> wait(uint32_t timeout_ms = 0);
+std::vector<size_t> wait(uint32_t timeout_ms = 0);
 
 /// @brief execute queued transactions asynchronously in the background (without blocking).
 ///        numBytesReceivedAll() or numBytesReceived() is required to confirm the results of transactions.
@@ -269,10 +269,10 @@ bool trigger();
 size_t numTransactionsInFlight();
 /// @brief return the number of completed but not received transaction results
 size_t numTransactionsCompleted();
-/// @brief return the oldest result of the completed transaction (received bytes) if success, esp_err_t * -1 if failed
-int64_t numBytesReceived();
-/// @brief return all results of the completed transactions (received bytes) if success, esp_err_t * -1 if failed
-std::vector<int64_t> numBytesReceivedAll();
+/// @brief return the oldest result of the completed transaction (received bytes)
+size_t numBytesReceived();
+/// @brief return all results of the completed transactions (received bytes)
+std::vector<size_t> numBytesReceivedAll();
 /// @brief check if the queued transactions are completed and all results are handled
 bool hasTransactionsCompletedAndAllResultsHandled();
 /// @brief check if the queued transactions are completed
@@ -343,8 +343,8 @@ void end();
 static uint8_t *allocDMABuffer(size_t n_bytes);
 
 /// @brief execute one transaction and wait for the completion
-int64_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0);
-int64_t transfer(uint32_t flags, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms);
+size_t transfer(const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms = 0);
+size_t transfer(uint32_t flags, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size, uint32_t timeout_ms);
 
 /// @brief  queue transaction to internal transaction buffer.
 ///         To start transaction, wait() or trigger() must be called.
@@ -353,7 +353,7 @@ bool queue(uint32_t flags, const uint8_t* tx_buf, uint8_t* rx_buf, size_t size);
 
 /// @brief execute queued transactions and wait for the completion.
 ///        rx_buf is automatically updated after the completion of each transaction.
-std::vector<int64_t> wait(uint32_t timeout_ms = 0);
+std::vector<size_t> wait(uint32_t timeout_ms = 0);
 
 /// @brief execute queued transactions asynchronously in the background (without blocking)
 ///        numBytesReceivedAll() or numBytesReceived() is required to confirm the results of transactions
@@ -364,10 +364,10 @@ bool trigger();
 size_t numTransactionsInFlight();
 /// @brief return the number of completed but not received transaction results
 size_t numTransactionsCompleted();
-/// @brief return the oldest result of the completed transaction (received bytes) if success, esp_err_t * -1 if failed
-int64_t numBytesReceived();
-/// @brief return all results of the completed transactions (received bytes) if success, esp_err_t * -1 if failed
-std::vector<int64_t> numBytesReceivedAll();
+/// @brief return the oldest result of the completed transaction (received bytes)
+size_t numBytesReceived();
+/// @brief return all results of the completed transactions (received bytes)
+std::vector<size_t> numBytesReceivedAll();
 /// @brief check if the queued transactions are completed and all results are handled
 bool hasTransactionsCompletedAndAllResultsHandled();
 /// @brief check if the queued transactions are completed

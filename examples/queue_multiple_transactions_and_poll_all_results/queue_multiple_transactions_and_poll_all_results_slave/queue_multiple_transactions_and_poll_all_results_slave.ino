@@ -58,7 +58,7 @@ void loop()
         Serial.println("all queued transactions completed. start verifying received data from slave");
 
         // get received bytes for all transactions
-        const std::vector<int64_t> received_bytes = slave.numBytesReceivedAll();
+        const std::vector<size_t> received_bytes = slave.numBytesReceivedAll();
 
         // verify and dump difference with received data
         // NOTE: we need only 1st results (received_bytes[0])
