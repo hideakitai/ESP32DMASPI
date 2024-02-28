@@ -269,10 +269,16 @@ bool trigger();
 size_t numTransactionsInFlight();
 /// @brief return the number of completed but not received transaction results
 size_t numTransactionsCompleted();
+/// @brief return the number of completed but not received transaction errors
+size_t numTransactionErrors();
 /// @brief return the oldest result of the completed transaction (received bytes)
 size_t numBytesReceived();
 /// @brief return all results of the completed transactions (received bytes)
 std::vector<size_t> numBytesReceivedAll();
+/// @brief return the oldest error of the completed transaction
+esp_err_t error();
+/// @brief return all errors of the completed transactions
+std::vector<esp_err_t> errors();
 /// @brief check if the queued transactions are completed and all results are handled
 bool hasTransactionsCompletedAndAllResultsHandled();
 /// @brief check if the queued transactions are completed
@@ -364,11 +370,17 @@ bool trigger();
 size_t numTransactionsInFlight();
 /// @brief return the number of completed but not received transaction results
 size_t numTransactionsCompleted();
+/// @brief return the number of completed but not received transaction errors
+size_t numTransactionErrors();
 /// @brief return the oldest result of the completed transaction (received bytes)
 size_t numBytesReceived();
 /// @brief return all results of the completed transactions (received bytes)
 std::vector<size_t> numBytesReceivedAll();
 /// @brief check if the queued transactions are completed and all results are handled
+/// @brief return the oldest error of the completed transaction
+esp_err_t error();
+/// @brief return all errors of the completed transactions
+std::vector<esp_err_t> errors();
 bool hasTransactionsCompletedAndAllResultsHandled();
 /// @brief check if the queued transactions are completed
 bool hasTransactionsCompletedAndAllResultsReady(size_t num_queued);
