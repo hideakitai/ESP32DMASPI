@@ -7,6 +7,7 @@
 #include <driver/spi_master.h>
 #include <esp_log.h>
 #include <vector>
+#include <string>
 #include <memory>
 
 #ifndef ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN

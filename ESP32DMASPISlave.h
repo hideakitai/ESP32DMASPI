@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <driver/spi_slave.h>
 #include <vector>
+#include <string>
 
 #ifndef ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN
 #define ARDUINO_ESP32_DMA_SPI_NAMESPACE_BEGIN \
