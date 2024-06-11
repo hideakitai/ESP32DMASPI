@@ -70,6 +70,7 @@ struct spi_slave_context_t
     };
     spi_host_device_t host {SPI2_HOST};
     int dma_chan {SPI_DMA_CH_AUTO};  // must be 1, 2 or AUTO
+    TaskHandle_t main_task_handle {NULL};
 };
 
 struct spi_transaction_context_t
@@ -204,6 +205,7 @@ void spi_slave_task(void *arg)
 
     spi_slave_free(ctx->host);
 
+    xTaskNotifyGive(ctx->main_task_handle);
     vTaskDelete(NULL);
 }
 
@@ -292,6 +294,9 @@ public:
     void end()
     {
         xTaskNotifyGive(spi_task_handle);
+        if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(5000)) != pdTRUE) {
+            ESP_LOGW(TAG, "timeout waiting for the termination of spi_slave_task");
+        }
     }
 
     /// @brief allocate dma memory buffer (requires the memory allocated with this method for dma)
@@ -642,6 +647,7 @@ private:
     {
         this->ctx.host = this->hostFromBusNumber(spi_bus);
         this->ctx.bus_cfg.flags |= SPICOMMON_BUSFLAG_SLAVE;
+        this->ctx.main_task_handle = xTaskGetCurrentTaskHandle();
         this->transactions.reserve(this->ctx.if_cfg.queue_size);
 
         // create spi slave task
