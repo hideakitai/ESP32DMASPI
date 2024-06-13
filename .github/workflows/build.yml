@@ -29,15 +29,27 @@ jobs:
           - vendor: esp32
             arch: esp32
             name: esp32
-            version: 2.0.17
+            version: 2
           - vendor: esp32
             arch: esp32
             name: esp32s3
-            version: 2.0.17
+            version: 2
           - vendor: esp32
             arch: esp32
             name: esp32c3
-            version: 2.0.17
+            version: 2
+          - vendor: esp32
+            arch: esp32
+            name: esp32
+            version: 3
+          - vendor: esp32
+            arch: esp32
+            name: esp32s3
+            version: 3
+          - vendor: esp32
+            arch: esp32
+            name: esp32c3
+            version: 3
         include:
           - index: https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
             board:
