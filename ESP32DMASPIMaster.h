@@ -33,7 +33,7 @@ static constexpr int SPI_MASTER_TASK_PRIORITY = 5;
 
 static QueueHandle_t s_trans_queue_handle {NULL};
 static constexpr int SEND_TRANS_QUEUE_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
-static constexpr int RECV_TRANS_QUEUE_TIMEOUT_TICKS = portMAX_DELAY;
+static constexpr int RECV_TRANS_QUEUE_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
 static QueueHandle_t s_trans_result_handle {NULL};
 static constexpr int SEND_TRANS_RESULT_TIMEOUT_TICKS = pdMS_TO_TICKS(5000);
 static constexpr int RECV_TRANS_RESULT_TIMEOUT_TICKS = 0;
@@ -227,6 +227,8 @@ void spi_master_task(void *arg)
     spi_bus_free(ctx->host);
 
     xTaskNotifyGive(ctx->main_task_handle);
+    ESP_LOGD(TAG, "spi_master_task finished");
+
     vTaskDelete(NULL);
 }
 
@@ -315,10 +317,15 @@ public:
     /// @brief stop spi master (terminate spi_master_task and deinitialize spi)
     void end()
     {
-        xTaskNotifyGive(spi_task_handle);
+        if (this->spi_task_handle == NULL) {
+            ESP_LOGW(TAG, "spi_master_task already terminated");
+            return;
+        }
+        xTaskNotifyGive(this->spi_task_handle);
         if (xTaskNotifyWait(0, 0, NULL, pdMS_TO_TICKS(5000)) != pdTRUE) {
             ESP_LOGW(TAG, "timeout waiting for the termination of spi_master_task");
         }
+        this->spi_task_handle = NULL;
     }
 
     /// @brief allocate dma memory buffer (requires the memory allocated with this method for dma)
@@ -721,7 +728,7 @@ private:
 
         // create spi master task
         std::string task_name = std::string("spi_master_task_") + std::to_string(this->ctx.if_cfg.spics_io_num);
-        int ret = xTaskCreatePinnedToCore(spi_master_task, task_name.c_str(), SPI_MASTER_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_MASTER_TASK_PRIORITY, &spi_task_handle, 1);
+        int ret = xTaskCreatePinnedToCore(spi_master_task, task_name.c_str(), SPI_MASTER_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_MASTER_TASK_PRIORITY, &this->spi_task_handle, 1);
         if (ret != pdPASS) {
             ESP_LOGE(TAG, "failed to create spi_master_task: %d", ret);
             return false;
