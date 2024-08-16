@@ -250,6 +250,11 @@ public:
         this->ctx.bus_cfg.sclk_io_num = (spi_bus == VSPI) ? SCK : 14;
         this->ctx.bus_cfg.mosi_io_num = (spi_bus == VSPI) ? MOSI : 13;
         this->ctx.bus_cfg.miso_io_num = (spi_bus == VSPI) ? MISO : 12;
+#else
+        this->ctx.if_cfg.spics_io_num = SS;
+        this->ctx.bus_cfg.sclk_io_num = SCK;
+        this->ctx.bus_cfg.mosi_io_num = MOSI;
+        this->ctx.bus_cfg.miso_io_num = MISO;
 #endif
         return this->initialize(spi_bus);
     }
