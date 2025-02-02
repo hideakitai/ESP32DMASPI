@@ -38,8 +38,10 @@ bool verifyAndDumpDifference(const char *a_title, const uint8_t *a_buf, size_t a
 
         // if a_buf[i] and b_buf[i] is not same, check the range that has difference
         size_t j = 1;
-        while (a_buf[i + j] != b_buf[i + j]) {
-            j++;
+        for (; i + j < a_size; ++j) {
+            if (a_buf[i + j] != b_buf[i + j]) {
+                break;
+            }
         }
 
         // dump different data range
