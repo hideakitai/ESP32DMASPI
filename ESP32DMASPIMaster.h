@@ -76,10 +76,10 @@ struct spi_master_context_t
         .data7_io_num = -1,
         .max_transfer_sz = 4092,  // default: 4092 if DMA enabled, SOC_SPI_MAXIMUM_BUFFER_SIZE if DMA disabled
         .flags = SPICOMMON_BUSFLAG_MASTER,
-#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0)
-        .isr_cpu_id = INTR_CPU_ID_AUTO,
-#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
         .isr_cpu_id = ESP_INTR_CPU_AFFINITY_AUTO,
+#elif ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 1, 0)
+        .isr_cpu_id = INTR_CPU_ID_AUTO,
 #endif
         .intr_flags = 0,
     };
