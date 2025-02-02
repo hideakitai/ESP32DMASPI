@@ -290,6 +290,7 @@ public:
         this->ctx.bus_cfg.data1_io_num = data1;
         this->ctx.bus_cfg.data2_io_num = data2;
         this->ctx.bus_cfg.data3_io_num = data3;
+        this->ctx.bus_cfg.flags |= SPICOMMON_BUSFLAG_QUAD;
         return this->initialize(spi_bus);
     }
     /// @brief initialize SPI with HSPI/FSPI/VSPI and Octo SPI pins
@@ -316,6 +317,7 @@ public:
         this->ctx.bus_cfg.data5_io_num = data5;
         this->ctx.bus_cfg.data6_io_num = data6;
         this->ctx.bus_cfg.data7_io_num = data7;
+        this->ctx.bus_cfg.flags |= SPICOMMON_BUSFLAG_OCTAL;
         return this->initialize(spi_bus);
     }
 
@@ -755,8 +757,14 @@ private:
     ) {
         spi_transaction_ext_t trans;
 
+        if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_DUAL) {
+            trans.base.flags = flags | SPI_TRANS_MODE_DIO;
+        } else if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_QUAD) {
+            trans.base.flags = flags | SPI_TRANS_MODE_QIO;
+        } else if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_OCTAL) {
+            trans.base.flags = flags | SPI_TRANS_MODE_OCT;
+        }
         // allow variable cmd/addr/dummy bits based on spi_transaction_ext_t
-        trans.base.flags = flags;
         trans.base.cmd = cmd;
         trans.base.addr = addr;
         trans.base.length = 8 * size;  // in bit size
