@@ -53,11 +53,13 @@ struct spi_master_context_t
         .address_bits = 0,  // 0-64
         .dummy_bits = 0,
         .mode = SPI_MODE0,
+        .clock_source = SPI_CLK_SRC_DEFAULT,
         .duty_cycle_pos = 128,  // default: 128
         .cs_ena_pretrans = 0,   // only for half-duplex
         .cs_ena_posttrans = 0,
         .clock_speed_hz = SPI_MASTER_FREQ_8M,
         .input_delay_ns = 0,
+        .sample_point = SPI_SAMPLING_POINT_PHASE_0,
         .spics_io_num = SS,
         .flags = 0,
         .queue_size = 1,
@@ -74,6 +76,7 @@ struct spi_master_context_t
         .data5_io_num = -1,
         .data6_io_num = -1,
         .data7_io_num = -1,
+        .data_io_default_level = false,
         .max_transfer_sz = 4092,  // default: 4092 if DMA enabled, SOC_SPI_MAXIMUM_BUFFER_SIZE if DMA disabled
         .flags = SPICOMMON_BUSFLAG_MASTER,
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
@@ -606,6 +609,13 @@ public:
         this->setClockSpeedHz(freq);
     }
 
+    /// @brief set default data io level
+    /// @param level default data io level
+    void setDataIODefaultLevel(bool level)
+    {
+        this->ctx.bus_cfg.data_io_default_level = level;
+    }
+
     /// @brief set max transfer size in bytes
     /// @param size max bytes to transfer
     void setMaxTransferSize(size_t size)
@@ -652,6 +662,13 @@ public:
     /// @param n
     void setSpiMode(uint8_t m) { this->ctx.if_cfg.mode = m; }
 
+    /// @brief Select SPI clock source, SPI_CLK_SRC_DEFAULT by default.
+    /// @param clk_src
+    void setClockSource(spi_clock_source_t clk_src)
+    {
+        this->ctx.if_cfg.clock_source = clk_src;
+    }
+
     /// @brief Duty cycle of positive clock, in 1/256th increments (128 = 50%/50% duty). Setting this to 0 (=not setting it) is equivalent to setting this to 128.
     /// @param n
     void setDutyCyclePos(uint8_t n) { this->ctx.if_cfg.duty_cycle_pos = n; }
@@ -663,6 +680,13 @@ public:
     /// @brief Maximum data valid time of slave. The time required between SCLK and MISO valid, including the possible clock delay from slave to master. The driver uses this value to give an extra delay before the MISO is ready on the line. Leave at 0 unless you know you need a delay. For better timing performance at high frequency (over 8MHz), it's suggest to have the right value.
     /// @param n
     void setInputDelayNs(int n) { this->ctx.if_cfg.input_delay_ns = n; }
+
+    /// @brief Sample point tuning of spi master receiving bit.
+    /// @param sample_point
+    void setSamplePoint(spi_sampling_point_t sample_point)
+    {
+        this->ctx.if_cfg.sample_point = sample_point;
+    }
 
     /// @brief Bitwise OR of SPI_DEVICE_* flags.
     /// @param flags

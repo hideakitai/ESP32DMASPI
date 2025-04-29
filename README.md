@@ -291,6 +291,8 @@ bool hasTransactionsCompletedAndAllResultsReady(size_t num_queued);
 void setDataMode(uint8_t mode);
 /// @brief set spi frequency
 void setFrequency(size_t freq);
+/// @brief set default data io level
+void setDataIODefaultLevel(bool level);
 /// @brief set max transfer size in bytes
 void setMaxTransferSize(size_t size);
 /// @brief set queue size (default: 1)
@@ -307,6 +309,8 @@ void setDefaultAddressBits(uint8_t n);
 void setDefaultDummyBits(uint8_t n);
 /// @brief SPI mode, representing a pair of (CPOL, CPHA) configuration: 0: (0, 0), 1: (0, 1), 2: (1, 0), 3: (1, 1)
 void setSpiMode(uint8_t m);
+/// @brief Select SPI clock source, SPI_CLK_SRC_DEFAULT by default.
+void setClockSource(spi_clock_source_t clk_src);
 /// @brief Duty cycle of positive clock, in 1/256th increments (128 = 50%/50% duty).
 ///        Setting this to 0 (=not setting it) is equivalent to setting this to 128.
 void setDutyCyclePos(uint8_t n);
@@ -318,6 +322,8 @@ void setClockSpeedHz(size_t f);
 ///        Leave at 0 unless you know you need a delay.
 ///        For better timing performance at high frequency (over 8MHz), it's suggest to have the right value.
 void setInputDelayNs(int n);
+/// @brief Sample point tuning of spi master receiving bit.
+void setSamplePoint(spi_sampling_point_t sample_point);
 /// @brief Bitwise OR of SPI_DEVICE_* flags.
 void setDeviceFlags(uint32_t flags);
 /// @brief Callback to be called before a transmission is started.
