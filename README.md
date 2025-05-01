@@ -396,6 +396,8 @@ bool hasTransactionsCompletedAndAllResultsReady(size_t num_queued);
 
 /// @brief set spi data mode
 void setDataMode(uint8_t mode);
+/// @brief set default data io level
+void setDataIODefaultLevel(bool level);
 /// @brief set max transfer size in bytes
 void setMaxTransferSize(size_t size);
 /// @brief set queue size (default: 1)

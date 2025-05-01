@@ -53,13 +53,17 @@ struct spi_master_context_t
         .address_bits = 0,  // 0-64
         .dummy_bits = 0,
         .mode = SPI_MODE0,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
         .clock_source = SPI_CLK_SRC_DEFAULT,
+#endif
         .duty_cycle_pos = 128,  // default: 128
         .cs_ena_pretrans = 0,   // only for half-duplex
         .cs_ena_posttrans = 0,
         .clock_speed_hz = SPI_MASTER_FREQ_8M,
         .input_delay_ns = 0,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
         .sample_point = SPI_SAMPLING_POINT_PHASE_0,
+#endif
         .spics_io_num = SS,
         .flags = 0,
         .queue_size = 1,
@@ -76,7 +80,9 @@ struct spi_master_context_t
         .data5_io_num = -1,
         .data6_io_num = -1,
         .data7_io_num = -1,
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
         .data_io_default_level = false,
+#endif
         .max_transfer_sz = 4092,  // default: 4092 if DMA enabled, SOC_SPI_MAXIMUM_BUFFER_SIZE if DMA disabled
         .flags = SPICOMMON_BUSFLAG_MASTER,
 #if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 2, 0)
@@ -609,12 +615,14 @@ public:
         this->setClockSpeedHz(freq);
     }
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
     /// @brief set default data io level
     /// @param level default data io level
     void setDataIODefaultLevel(bool level)
     {
         this->ctx.bus_cfg.data_io_default_level = level;
     }
+#endif
 
     /// @brief set max transfer size in bytes
     /// @param size max bytes to transfer
@@ -662,12 +670,14 @@ public:
     /// @param n
     void setSpiMode(uint8_t m) { this->ctx.if_cfg.mode = m; }
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
     /// @brief Select SPI clock source, SPI_CLK_SRC_DEFAULT by default.
     /// @param clk_src
     void setClockSource(spi_clock_source_t clk_src)
     {
         this->ctx.if_cfg.clock_source = clk_src;
     }
+#endif
 
     /// @brief Duty cycle of positive clock, in 1/256th increments (128 = 50%/50% duty). Setting this to 0 (=not setting it) is equivalent to setting this to 128.
     /// @param n
@@ -681,12 +691,14 @@ public:
     /// @param n
     void setInputDelayNs(int n) { this->ctx.if_cfg.input_delay_ns = n; }
 
+#if ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(5, 4, 1)
     /// @brief Sample point tuning of spi master receiving bit.
     /// @param sample_point
     void setSamplePoint(spi_sampling_point_t sample_point)
     {
         this->ctx.if_cfg.sample_point = sample_point;
     }
+#endif
 
     /// @brief Bitwise OR of SPI_DEVICE_* flags.
     /// @param flags
