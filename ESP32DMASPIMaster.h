@@ -6,6 +6,7 @@
 #include <SPI.h>
 #include <driver/spi_master.h>
 #include <esp_log.h>
+#include <soc/soc_caps.h>
 #include <vector>
 #include <string>
 #include <memory>
@@ -771,7 +772,11 @@ private:
 
         // create spi master task
         std::string task_name = std::string("spi_master_task_") + std::to_string(this->ctx.if_cfg.spics_io_num);
+#if SOC_CPU_CORES_NUM == 1
+        int ret = xTaskCreatePinnedToCore(spi_master_task, task_name.c_str(), SPI_MASTER_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_MASTER_TASK_PRIORITY, &this->spi_task_handle, 0);
+#else
         int ret = xTaskCreatePinnedToCore(spi_master_task, task_name.c_str(), SPI_MASTER_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_MASTER_TASK_PRIORITY, &this->spi_task_handle, 1);
+#endif
         if (ret != pdPASS) {
             ESP_LOGE(TAG, "failed to create spi_master_task: %d", ret);
             return false;

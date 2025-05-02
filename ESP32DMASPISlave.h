@@ -5,6 +5,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <driver/spi_slave.h>
+#include <soc/soc_caps.h>
 #include <vector>
 #include <string>
 
@@ -676,7 +677,11 @@ private:
 
         // create spi slave task
         std::string task_name = std::string("spi_slave_task_") + std::to_string(this->ctx.if_cfg.spics_io_num);
+#if SOC_CPU_CORES_NUM == 1
+        int ret = xTaskCreatePinnedToCore(spi_slave_task, task_name.c_str(), SPI_SLAVE_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_SLAVE_TASK_PRIORITY, &this->spi_task_handle, 0);
+#else
         int ret = xTaskCreatePinnedToCore(spi_slave_task, task_name.c_str(), SPI_SLAVE_TASK_STASCK_SIZE, static_cast<void*>(&this->ctx), SPI_SLAVE_TASK_PRIORITY, &this->spi_task_handle, 1);
+#endif
         if (ret != pdPASS) {
             ESP_LOGE(TAG, "failed to create spi_slave_task: %d", ret);
             return false;
