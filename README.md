@@ -335,6 +335,10 @@ void setPostCb(const transaction_cb_t post_cb);
 ///        see more details about callbacks at https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/spi_master.html#_CPPv4N29spi_device_interface_config_t6pre_cbE
 void setUserPreCbAndArg(const spi_master_user_cb_t &cb, void *arg);
 void setUserPostCbAndArg(const spi_master_user_cb_t &cb, void *arg)
+/// @brief enable continuous transactions in the next sequence of transactions
+void enableContinuousTransactions();
+/// @brief disable continuous transactions in the next sequence of transactions
+void disableContinuousTransactions();
 ```
 
 ### Slave
