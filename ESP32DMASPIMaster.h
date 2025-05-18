@@ -102,6 +102,7 @@ struct spi_transaction_context_t
 {
     spi_transaction_ext_t *trans_ext;
     size_t size;
+    bool is_continuous_transactions;
     TickType_t timeout_ticks;
 };
 
@@ -167,11 +168,19 @@ void spi_master_task(void *arg)
             assert(trans_ctx.size <= ctx->if_cfg.queue_size);
             xQueueOverwrite(s_in_flight_mailbox_handle, &trans_ctx.size);
 
+            // begin continuous transactions if requested
+            if (trans_ctx.is_continuous_transactions) {
+                spi_device_acquire_bus(device_handle, portMAX_DELAY);
+            }
+
             // execute new transaction if transaction request received from main task
             ESP_LOGD(TAG, "new transaction request received (size = %u)", trans_ctx.size);
             std::vector<esp_err_t> errs;
             errs.reserve(trans_ctx.size);
             for (size_t i = 0; i < trans_ctx.size; ++i) {
+                if (trans_ctx.is_continuous_transactions && i + 1 < trans_ctx.size) {
+                    trans_ctx.trans_ext[i].base.flags |= SPI_TRANS_CS_KEEP_ACTIVE;
+                }
                 spi_transaction_t *trans = (spi_transaction_t*)(&trans_ctx.trans_ext[i]);
                 esp_err_t err = spi_device_queue_trans(device_handle, trans, trans_ctx.timeout_ticks);
                 if (err != ESP_OK) {
@@ -214,6 +223,11 @@ void spi_master_task(void *arg)
                 xQueueOverwrite(s_in_flight_mailbox_handle, &num_rest_in_flight);
             }
 
+            // end continuous transactions if requested
+            if (trans_ctx.is_continuous_transactions) {
+                spi_device_release_bus(device_handle);
+            }
+
             // should be deleted because the ownership is moved from main task
             delete[] trans_ctx.trans_ext;
 
@@ -248,6 +262,7 @@ class Master
     std::vector<spi_transaction_ext_t> transactions;
     spi_master_cb_user_context_t cb_user_ctx;
     TaskHandle_t spi_task_handle {NULL};
+    bool is_continuous_transactions {false};
 
 public:
     /// @brief initialize SPI with the default pin assignment for HSPI, FSPI or VSPI
@@ -481,6 +496,7 @@ public:
         spi_transaction_context_t trans_ctx {
             .trans_ext = new spi_transaction_ext_t[this->transactions.size()],
             .size = this->transactions.size(),
+            .is_continuous_transactions = this->is_continuous_transactions,
             .timeout_ticks = timeout_ms == 0 ? portMAX_DELAY : pdMS_TO_TICKS(timeout_ms),
         };
         for (size_t i = 0; i < this->transactions.size(); i++) {
@@ -736,6 +752,16 @@ public:
     {
         this->cb_user_ctx.post.user_cb = cb;
         this->cb_user_ctx.post.user_arg = arg;
+    }
+
+    /// @brief enable continuous transactions in the next sequence of transactions
+    void enableContinuousTransactions() {
+        this->is_continuous_transactions = true;
+    }
+
+    /// @brief disable continuous transactions in the next sequence of transactions
+    void disableContinuousTransactions() {
+        this->is_continuous_transactions = false;
     }
 
 private:
