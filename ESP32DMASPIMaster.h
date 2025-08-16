@@ -824,12 +824,13 @@ private:
     ) {
         spi_transaction_ext_t trans;
 
+        trans.base.flags = flags;
         if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_DUAL) {
-            trans.base.flags = flags | SPI_TRANS_MODE_DIO;
+            trans.base.flags |= SPI_TRANS_MODE_DIO;
         } else if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_QUAD) {
-            trans.base.flags = flags | SPI_TRANS_MODE_QIO;
+            trans.base.flags |= SPI_TRANS_MODE_QIO;
         } else if (this->ctx.bus_cfg.flags & SPICOMMON_BUSFLAG_OCTAL) {
-            trans.base.flags = flags | SPI_TRANS_MODE_OCT;
+            trans.base.flags |= SPI_TRANS_MODE_OCT;
         }
         // allow variable cmd/addr/dummy bits based on spi_transaction_ext_t
         trans.base.cmd = cmd;
