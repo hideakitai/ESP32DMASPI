@@ -185,9 +185,7 @@ void loop()
 }
 ```
 
-## SPI Buses and SPI Pins
-
-This library's `bool begin(const uint8_t spi_bus = HSPI)` function uses `HSPI` as the default SPI bus as same as `SPI` library of `arduino-esp32` ([reference](https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.h#L61)).
+## SPI Pins
 
 The pins for SPI buses are automatically attached as follows. "Default SPI Pins" means the pins defined there are the same as `MOSI`, `MISO`, `SCK`, and `SS`.
 
@@ -195,20 +193,28 @@ The pins for SPI buses are automatically attached as follows. "Default SPI Pins"
 | --------- | --------- | ---- | ---- | --- | --- | ---------------- |
 | `esp32`   | HSPI      | 13   | 12   | 14  | 15  | No               |
 | `esp32`   | VSPI/FSPI | 23   | 19   | 18  | 5   | Yes              |
-| `esp32s2` | HSPI/FSPI | 35   | 37   | 36  | 34  | Yes              |
-| `esp32s3` | HSPI/FSPI | 11   | 13   | 12  | 10  | Yes              |
-| `esp32c3` | HSPI/FSPI | 6    | 5    | 4   | 7   | Yes              |
+| `esp32s2` | FSPI/HSPI | 35   | 37   | 36  | 34  | Yes              |
+| `esp32s3` | FSPI/HSPI | 11   | 13   | 12  | 10  | Yes              |
+| `esp32c3` | FSPI      | 6    | 5    | 4   | 7   | Yes              |
 
 Depending on your board, the default SPI pins are defined in `pins_arduino.h`. For example, `esp32`'s default SPI pins are found [here](https://github.com/espressif/arduino-esp32/blob/e1f14331f173a00a9062f616bc9a62c358b9076f/variants/esp32/pins_arduino.h#L20-L23) (`MOSI: 23, MISO: 19, SCK: 18, SS: 5`). Please refer to [arduino-esp32/variants](https://github.com/espressif/arduino-esp32/tree/e1f14331f173a00a9062f616bc9a62c358b9076f/variants) for your board's default SPI pins.
 
-The supported SPI buses are different from the ESP32 chip. Please note that there may be a restriction to use `FSPI` for your SPI bus. (Note: though `arduino-esp32` still uses `FSPI` and `HSPI` for all chips (v2.0.11), these are deprecated for the chips after `esp32s2`)
+## SPI Buses
+
+This library's `bool begin(const uint8_t spi_bus)` function uses `HSPI` as the default SPI bus for ESP32 as same as `SPI` library of `arduino-esp32` ([reference](https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.h#L61)). But for other chips (ESP32-S2, ESP32-S3, ESP32-C3, etc.), `FSPI` is used as the default SPI bus.
+
+The supported SPI buses are different from the ESP32 chip. Please note that there may be a restriction to use `FSPI` of ESP32 for your SPI bus. Please refer to the following table for the supported SPI buses.
 
 | Chip     | FSPI                | HSPI                | VSPI                 |
 | -------- | ------------------- | ------------------- | -------------------- |
 | ESP32    | SPI1_HOST(`0`) [^1] | SPI2_HOST(`1`) [^2] | SPI3_HOST (`2`) [^3] |
 | ESP32-S2 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                    |
 | ESP32-S3 | SPI2_HOST(`1`)      | SPI3_HOST(`2`)      | -                    |
-| ESP32-C3 | SPI2_HOST(`1`)      | SPI2_HOST(`1`)      | -                    |
+| ESP32-C3 | SPI2_HOST(`1`)      | -                   | -                    |
+| ESP32-C5 | SPI2_HOST(`1`)      | -                   | -                    |
+| ESP32-C6 | SPI2_HOST(`1`)      | -                   | -                    |
+| ESP32-H2 | SPI2_HOST(`1`)      | -                   | -                    |
+| ESP32-P4 | SPI2_HOST(`1`)      | -                   | -                    |
 
 [^1]: SPI bus attached to the flash (can use the same data lines but different SS)
 [^2]: SPI bus normally mapped to pins 12 - 15 on ESP32 but can be matrixed to any pins
@@ -217,14 +223,14 @@ The supported SPI buses are different from the ESP32 chip. Please note that ther
 <details>
 <summary>Reference</summary>
 
-- https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/spi_master.html
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.cpp#L346-L350
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.c#L719-L752
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/driver/include/driver/sdspi_host.h#L23-L29
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L26-L31
-- https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L77-L87
+- <https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-reference/peripherals/spi_master.html>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/libraries/SPI/src/SPI.cpp#L346-L350>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.h#L28-L37>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/cores/esp32/esp32-hal-spi.c#L719-L752>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/driver/include/driver/sdspi_host.h#L23-L29>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L26-L31>
+- <https://github.com/espressif/arduino-esp32/blob/099b432d10fb4ca1529c52241bcadcb8a4386f17/tools/sdk/esp32/include/hal/include/hal/spi_types.h#L77-L87>
 
 </details>
 
@@ -233,8 +239,9 @@ The supported SPI buses are different from the ESP32 chip. Please note that ther
 ### Master
 
 ```C++
-/// @brief initialize SPI with the default pin assignment for HSPI, FSPI or VSPI
-bool begin(uint8_t spi_bus = HSPI);
+/// @brief initialize SPI with the default pin assignment for FSPI, HSPI or VSPI
+/// @param spi_bus FSPI, HSPI or VSPI (HSPI is default for ESP32, FSPI is default for other chips)
+bool begin(uint8_t spi_bus);
 /// @brief initialize SPI with HSPI/FSPI/VSPI, sck, miso, mosi, and ss pins
 bool begin(uint8_t spi_bus, int sck, int miso, int mosi, int ss);
 /// @brief initialize SPI with HSPI/FSPI/VSPI and Qued SPI pins
@@ -444,7 +451,7 @@ void setUserPostTransCbAndArg(const spi_slave_user_cb_t &cb, void *arg);
 #define SPI_DEVICE_DDRCLK          (1<<7)
 ```
 
-https://github.com/espressif/esp-idf/blob/master/components/driver/include/driver/spi_master.h#L32-L45
+<https://github.com/espressif/esp-idf/blob/master/components/driver/include/driver/spi_master.h#L32-L45>
 
 ```C++
 #define SPI_SLAVE_TXBIT_LSBFIRST          (1<<0)  ///< Transmit command/address/data LSB first instead of the default MSB first
@@ -452,7 +459,7 @@ https://github.com/espressif/esp-idf/blob/master/components/driver/include/drive
 #define SPI_SLAVE_BIT_LSBFIRST            (SPI_SLAVE_TXBIT_LSBFIRST|SPI_SLAVE_RXBIT_LSBFIRST) ///< Transmit and receive LSB first
 ```
 
-https://github.com/espressif/esp-idf/blob/733fbd9ecc8ac0780de51b3761a16d1faec63644/components/driver/include/driver/spi_slave.h#L23-L25
+<https://github.com/espressif/esp-idf/blob/733fbd9ecc8ac0780de51b3761a16d1faec63644/components/driver/include/driver/spi_slave.h#L23-L25>
 
 ## Restrictions and Known Issues for SPI with DMA Buffer (Help Wanted)
 

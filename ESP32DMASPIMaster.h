@@ -265,10 +265,14 @@ class Master
     bool is_continuous_transactions {false};
 
 public:
-    /// @brief initialize SPI with the default pin assignment for HSPI, FSPI or VSPI
-    /// @param spi_bus HSPI, FSPI or VSPI
+    /// @brief initialize SPI with the default pin assignment for FSPI, HSPI or VSPI
+    /// @param spi_bus FSPI, HSPI or VSPI (HSPI is default for ESP32, FSPI is default for other chips)
     /// @return true if initialization succeeded, false otherwise
+#if defined(CONFIG_IDF_TARGET_ESP32)
     bool begin(uint8_t spi_bus = HSPI)
+#else
+    bool begin(uint8_t spi_bus = FSPI)
+#endif
     {
 #ifdef CONFIG_IDF_TARGET_ESP32
         this->ctx.if_cfg.spics_io_num = (spi_bus == VSPI) ? SS : 15;
@@ -775,16 +779,20 @@ private:
                 return SPI2_HOST;
 #endif
             case HSPI:
-#if defined(CONFIG_IDF_TARGET_ESP32) || defined(CONFIG_IDF_TARGET_ESP32C3)
+#if defined(CONFIG_IDF_TARGET_ESP32)
                 return SPI2_HOST;
-#else
+#elif defined(CONFIG_IDF_TARGET_ESP32S2) || defined(CONFIG_IDF_TARGET_ESP32S3)
                 return SPI3_HOST;
+#else
+                ESP_LOGW(TAG, "HSPI is not available on this target, using SPI2_HOST instead");
+                return SPI2_HOST;
 #endif
 #ifdef CONFIG_IDF_TARGET_ESP32
             case VSPI:
                 return SPI3_HOST;
 #endif
             default:
+                ESP_LOGW(TAG, "Invalid spi bus %d: using SPI2_HOST instead", spi_bus);
                 return SPI2_HOST;
         }
     }
